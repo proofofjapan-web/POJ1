@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html><head><meta charset='utf-8'>
+<style>
+  body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+  svg{width:200px;height:310px;}
+</style>
+</head><body><svg id="zukku-ball" viewBox="0 0 200 310" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- ウォームホワイト（ボディ・頭部） -->
+          <radialGradient id="bodyGrad" cx="33%" cy="24%" r="76%">
+            <stop offset="0%"   stop-color="#FAFAF8"/>
+            <stop offset="38%"  stop-color="#EEECE8"/>
+            <stop offset="72%"  stop-color="#D9D5CE"/>
+            <stop offset="100%" stop-color="#C2BEB6"/>
+          </radialGradient>
+          <!-- 赤（耳・翼・頭頂パネル） -->
+          <radialGradient id="redGrad" cx="30%" cy="22%" r="74%">
+            <stop offset="0%"   stop-color="#F56858"/>
+            <stop offset="48%"  stop-color="#D63520"/>
+            <stop offset="100%" stop-color="#9A1E10"/>
+          </radialGradient>
+          <!-- 赤（暗面） -->
+          <linearGradient id="redShadow" x1="0%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%"   stop-color="#B82C1C"/>
+            <stop offset="100%" stop-color="#721208"/>
+          </linearGradient>
+          <!-- 目枠（黒） -->
+          <radialGradient id="eyeBlack" cx="38%" cy="32%" r="66%">
+            <stop offset="0%"   stop-color="#282220"/>
+            <stop offset="100%" stop-color="#0A0806"/>
+          </radialGradient>
+          <!-- カメラ外枠グレー -->
+          <radialGradient id="camOuter" cx="36%" cy="28%" r="68%">
+            <stop offset="0%"   stop-color="#C8C4C0"/>
+            <stop offset="58%"  stop-color="#A4A09C"/>
+            <stop offset="100%" stop-color="#7A7672"/>
+          </radialGradient>
+          <!-- LED 青（デフォルト・listening） -->
+          <radialGradient id="ledBlue" cx="34%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#B0F0FF"/>
+            <stop offset="42%"  stop-color="#22B8F8"/>
+            <stop offset="100%" stop-color="#0450C0"/>
+          </radialGradient>
+          <!-- LED 緑（idle） -->
+          <radialGradient id="ledGreen" cx="34%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#A0FFB8"/>
+            <stop offset="42%"  stop-color="#18D050"/>
+            <stop offset="100%" stop-color="#067020"/>
+          </radialGradient>
+          <!-- LED ゴールド（speaking） -->
+          <radialGradient id="ledGold" cx="34%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#FFF8A8"/>
+            <stop offset="42%"  stop-color="#E8C038"/>
+            <stop offset="100%" stop-color="#A06808"/>
+          </radialGradient>
+          <!-- 落ち影 -->
+          <radialGradient id="dropShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.62)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </radialGradient>
+
+          <!-- フィルター -->
+          <filter id="bodyShad" x="-12%" y="-6%" width="124%" height="122%">
+            <feDropShadow dx="0" dy="9" stdDeviation="13" flood-color="rgba(0,0,0,0.52)"/>
+          </filter>
+          <filter id="wingShad" x="-18%" y="-6%" width="136%" height="114%">
+            <feDropShadow dx="3" dy="6" stdDeviation="7" flood-color="rgba(0,0,0,0.42)"/>
+          </filter>
+          <!-- 目グロウ idle/thinking -->
+          <filter id="eyeGlowWhite" x="-65%" y="-65%" width="230%" height="230%">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- 目グロウ listening -->
+          <filter id="eyeGlowGold" x="-85%" y="-85%" width="270%" height="270%">
+            <feGaussianBlur stdDeviation="5.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- 目グロウ speaking -->
+          <filter id="eyeGlowBright" x="-110%" y="-110%" width="320%" height="320%">
+            <feGaussianBlur stdDeviation="9" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- LED グロウ -->
+          <filter id="ledGlow" x="-52%" y="-52%" width="204%" height="204%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ===== 落ち影 ===== -->
+        <ellipse cx="100" cy="303" rx="54" ry="7" fill="url(#dropShadow)"/>
+
+        <!-- ============================================================
+             翼 — 細長い板状、ボディ両サイドで下向きに垂れる
+             実物: 幅18-22px、高さ約80px、上部がボディ境界から始まる
+        ============================================================ -->
+        <!-- 左翼 -->
+        <g filter="url(#wingShad)">
+          <path d="M 34 168  C 14 164  4 170  4 184
+                              C 4 204  8 228  18 248
+                              C 24 258  34 260  40 254
+                              C 46 248  44 236  42 220
+                              C 40 204  36 186  34 168 Z"
+                fill="url(#redGrad)"/>
+          <!-- 翼の内側暗面 -->
+          <path d="M 32 172  C 16 169  8 175  8 188
+                              C 8 207  12 228  20 246
+                              C 26 255  36 256  40 250
+                              C 40 242  38 228  36 212
+                              C 34 198  32 184  32 172 Z"
+                fill="url(#redShadow)" opacity="0.55"/>
+          <!-- ハイライトライン -->
+          <path d="M 28 174 C 16 172 8 180 8 194 C 8 210 12 228 18 244"
+                stroke="rgba(255,170,150,0.28)" stroke-width="2" fill="none"/>
+        </g>
+        <!-- 右翼 -->
+        <g filter="url(#wingShad)">
+          <path d="M 166 168  C 186 164  196 170  196 184
+                               C 196 204  192 228  182 248
+                               C 176 258  166 260  160 254
+                               C 154 248  156 236  158 220
+                               C 160 204  164 186  166 168 Z"
+                fill="url(#redGrad)"/>
+          <path d="M 168 172  C 184 169  192 175  192 188
+                               C 192 207  188 228  180 246
+                               C 174 255  164 256  160 250
+                               C 160 242  162 228  164 212
+                               C 166 198  168 184  168 172 Z"
+                fill="url(#redShadow)" opacity="0.55"/>
+          <path d="M 172 174 C 184 172 192 180 192 194 C 192 210 188 228 182 244"
+                stroke="rgba(255,170,150,0.28)" stroke-width="2" fill="none"/>
+        </g>
+
+        <!-- ============================================================
+             ボディ — 縦長の円筒、白
+             実物: 頭部よりかなり高い縦長フォルム
+        ============================================================ -->
+        <rect x="34" y="162" width="132" height="118" rx="20" ry="20"
+              fill="url(#bodyGrad)" filter="url(#bodyShad)"/>
+        <!-- ボディ底部台座 -->
+        <rect x="28" y="256" width="144" height="26" rx="14" ry="14"
+              fill="#CCCAC6"/>
+        <rect x="28" y="256" width="144" height="6" rx="3"
+              fill="rgba(0,0,0,0.10)"/>
+
+        <!-- ============================================================
+             頭部 — 横に広い半球状、白
+             実物: 横幅がボディより広く、縦は横より少し短い
+        ============================================================ -->
+        <ellipse cx="100" cy="112" rx="72" ry="66"
+                 fill="url(#bodyGrad)" filter="url(#bodyShad)"/>
+        <!-- 頭部左上ハイライト -->
+        <ellipse cx="76" cy="82" rx="32" ry="22"
+                 fill="rgba(255,255,255,0.26)" transform="rotate(-16,76,82)"/>
+        <ellipse cx="68" cy="75" rx="17" ry="11"
+                 fill="rgba(255,255,255,0.14)" transform="rotate(-16,68,75)"/>
+
+        <!-- 頭とボディの境界ライン（黒い帯） -->
+        <rect x="34" y="162" width="132" height="8" rx="0"
+              fill="#181614"/>
+        <!-- 境界ラインの上端を丸く -->
+        <rect x="34" y="162" width="132" height="4" rx="2"
+              fill="rgba(0,0,0,0.0)"/>
+
+        <!-- ============================================================
+             耳 — 小さな三角形の突起、頭頂部左右
+             実物: 根元幅約28px、高さ約38px、やや外側に傾く
+        ============================================================ -->
+        <!-- 左耳（外側面） -->
+        <path d="M 60 62  L 48 28  L 80 40  Z" fill="url(#redGrad)"/>
+        <!-- 左耳の内側パネル（やや暗く） -->
+        <path d="M 62 60  L 52 32  L 78 42  Z" fill="url(#redShadow)" opacity="0.6"/>
+        <!-- 左耳の内側溝 -->
+        <path d="M 56 32 L 75 41" stroke="rgba(50,5,0,0.45)" stroke-width="1.4" fill="none"/>
+        <path d="M 54 40 L 73 47" stroke="rgba(50,5,0,0.3)"  stroke-width="1"   fill="none"/>
+
+        <!-- 右耳（外側面） -->
+        <path d="M 140 62  L 152 28  L 120 40  Z" fill="url(#redGrad)"/>
+        <!-- 右耳の内側パネル -->
+        <path d="M 138 60  L 148 32  L 122 42  Z" fill="url(#redShadow)" opacity="0.6"/>
+        <!-- 右耳の内側溝 -->
+        <path d="M 144 32 L 125 41" stroke="rgba(50,5,0,0.45)" stroke-width="1.4" fill="none"/>
+        <path d="M 146 40 L 127 47" stroke="rgba(50,5,0,0.3)"  stroke-width="1"   fill="none"/>
+
+        <!-- ============================================================
+             頭頂パネル — 耳の間の赤い逆三角形パネル
+             実物: 額から頭頂にかけての赤いパーツ、表面に細い溝3本
+        ============================================================ -->
+        <!-- パネル本体（逆三角形台形） -->
+        <path d="M 62 62  Q 72 40  100 34  Q 128 40  138 62
+                           Q 124 56  100 54  Q 76 56  62 62 Z"
+              fill="url(#redGrad)" opacity="0.92"/>
+        <!-- 溝ライン3本 -->
+        <path d="M 80 52 Q 100 46 120 52" stroke="rgba(50,5,0,0.42)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M 84 44 Q 100 39 116 44" stroke="rgba(50,5,0,0.30)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M 88 37 Q 100 33 112 37" stroke="rgba(50,5,0,0.18)" stroke-width="1.0" fill="none" stroke-linecap="round"/>
+        <!-- パネル中央インジケーター（小さなボタン） -->
+        <ellipse cx="100" cy="53" rx="5" ry="3.5" fill="#901810" opacity="0.6"/>
+        <ellipse cx="100" cy="52" rx="3"   ry="2"   fill="rgba(255,100,80,0.35)"/>
+
+        <!-- ============================================================
+             目 — 黒い外枠 → 薄紫/白リング → 小さな黒瞳
+             実物: 大きな黒い円の内側に白〜薄紫のリングが鮮明に見える
+        ============================================================ -->
+        <!-- 左目外枠（黒い大きな円） -->
+        <circle cx="76"  cy="114" r="28" fill="url(#eyeBlack)"/>
+        <!-- 右目外枠 -->
+        <circle cx="124" cy="114" r="28" fill="url(#eyeBlack)"/>
+
+        <!-- 左目リング（白/薄紫 — JSでstroke変更） -->
+        <circle id="eye-l" cx="76"  cy="114" r="21"
+                fill="none" stroke="#DDD8F0" stroke-width="6"
+                filter="url(#eyeGlowWhite)"/>
+        <!-- 右目リング -->
+        <circle id="eye-r" cx="124" cy="114" r="21"
+                fill="none" stroke="#DDD8F0" stroke-width="6"
+                filter="url(#eyeGlowWhite)"/>
+
+        <!-- 左目瞳（黒・小さめ） -->
+        <circle cx="76"  cy="114" r="11" fill="#060402"/>
+        <!-- 右目瞳 -->
+        <circle cx="124" cy="114" r="11" fill="#060402"/>
+
+        <!-- 目のガラス反射 -->
+        <circle cx="70"  cy="108" r="3.5" fill="rgba(255,255,255,0.52)"/>
+        <circle cx="118" cy="108" r="3.5" fill="rgba(255,255,255,0.52)"/>
+        <circle cx="68"  cy="106" r="1.8" fill="rgba(255,255,255,0.78)"/>
+        <circle cx="116" cy="106" r="1.8" fill="rgba(255,255,255,0.78)"/>
+
+        <!-- JS互換ダミー -->
+        <circle id="pupil-l" cx="76"  cy="114" r="0" fill="transparent"/>
+        <circle id="pupil-r" cx="124" cy="114" r="0" fill="transparent"/>
+
+        <!-- ============================================================
+             くちばし — 黄色い小さなダイヤ形、目の間・中央
+             実物: 鮮やかな黄色、小さくてシャープな菱形
+        ============================================================ -->
+        <path d="M 100 129  L 92 138  L 100 146  L 108 138 Z" fill="#F0C010"/>
+        <!-- 上半分ハイライト -->
+        <path d="M 100 129  L 92 138  L 100 143 Z" fill="rgba(255,245,130,0.65)"/>
+        <!-- 下半分シャドウ -->
+        <path d="M 100 146  L 92 138  L 97 138  Z" fill="rgba(0,0,0,0.15)"/>
+
+        <!-- ============================================================
+             カメラ — ボディ上部中央のグレー円形ユニット
+             実物: 外枠はグレー、内側にダーク枠、中央に黒レンズ
+        ============================================================ -->
+        <!-- カメラ外枠（グレー） -->
+        <circle cx="100" cy="198" r="26" fill="url(#camOuter)"/>
+        <circle cx="100" cy="198" r="26" fill="none"
+                stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+        <!-- カメラ内ベゼル -->
+        <circle cx="100" cy="198" r="19" fill="#1E1C1A"/>
+        <!-- レンズ -->
+        <circle cx="100" cy="198" r="13" fill="#050402"/>
+        <!-- レンズ反射 -->
+        <circle cx="94"  cy="192" r="3.5" fill="rgba(255,255,255,0.16)"/>
+        <circle cx="92"  cy="190" r="1.8" fill="rgba(255,255,255,0.30)"/>
+        <!-- カメラ上部インジケーター -->
+        <circle cx="100" cy="174" r="3"   fill="#8C8A88"/>
+        <circle cx="100" cy="174" r="1.6" fill="#BEBCBA"/>
+
+        <!-- ============================================================
+             LEDボタン — ボディ下部中央の大きな丸いボタン
+             実物: 大きめの青い発光ボタン、ベゼル付き
+        ============================================================ -->
+        <!-- ベゼル外枠 -->
+        <circle cx="100" cy="246" r="24"
+                fill="#D2CFCC" stroke="rgba(0,0,0,0.16)" stroke-width="1.5"/>
+        <!-- LED発光部 -->
+        <circle id="belly-glow" cx="100" cy="246" r="18"
+                fill="url(#ledBlue)" filter="url(#ledGlow)"/>
+        <!-- LEDハイライト -->
+        <ellipse cx="95" cy="239" rx="7" ry="5"
+                 fill="rgba(255,255,255,0.40)" transform="rotate(-12,95,239)"/>
+
+        <!-- ============================================================
+             足 — 黒い角丸ブロック×2、ボディ底部
+        ============================================================ -->
+        <!-- 左足 -->
+        <rect x="44"  y="270" width="32" height="18" rx="9" ry="9" fill="#161410"/>
+        <!-- 右足 -->
+        <rect x="124" y="270" width="32" height="18" rx="9" ry="9" fill="#161410"/>
+        <!-- 足ハイライト -->
+        <rect x="48"  y="272" width="14" height="4" rx="2" fill="rgba(255,255,255,0.10)"/>
+        <rect x="128" y="272" width="14" height="4" rx="2" fill="rgba(255,255,255,0.10)"/>
+      </svg></body></html>
