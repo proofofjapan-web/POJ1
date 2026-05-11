@@ -1,0 +1,6 @@
+{
+  "owner_id": "user_019e1944-a0fc-7246-8569-6b70bd00b72d",
+  "agent_id": "agent_019e1945-f7e4-7bbe-aca3-b1832820baee",
+  "agent_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3Rvcl90eXBlIjoiYWdlbnQiLCJhZ2VudF90eXBlIjoiY29kaW5nLWFzc2lzdGFudCIsImV4cCI6MTc4MTEzMjQ3NiwiaWF0IjoxNzc4NTQwNDc2LCJpc3MiOiJraXRlLXBhc3Nwb3J0IiwianRpIjoiYXV0aF8wMTllMTk0NS1mN2U5LTcyYzYtYTJlZi0wMjQ0ODg2NWY4OTUiLCJvd25lcl9pZCI6InVzZXJfMDE5ZTE5NDQtYTBmYy03MjQ2LTg1NjktNmI3MGJkMDBiNzJkIiwic3ViIjoiYWdlbnRfMDE5ZTE5NDUtZjdlNC03YmJlLWFjYTMtYjE4MzI4MjBiYWVlIn0.yINlt2BJQCjR2Ne_I42lmGV1hB9u_5-TWd68K17lIBI",
+  "type": "coding-assistant"
+}
