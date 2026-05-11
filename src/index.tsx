@@ -283,7 +283,7 @@ app.get('/', (c) => {
     #voice-section { display: flex; flex-direction: column; align-items: center; padding: 28px 36px 20px; }
 
     .ball-stage {
-      position: relative; width: 200px; height: 200px;
+      position: relative; width: 200px; height: 220px;
       margin-bottom: 24px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
@@ -300,7 +300,7 @@ app.get('/', (c) => {
     @keyframes aura-float { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(1.75);opacity:0} }
 
     #zukku-ball {
-      width: 180px; height: 180px; position: relative; z-index: 2;
+      width: 180px; height: 200px; position: relative; z-index: 2;
       filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 12px rgba(201,168,76,0.1));
       transition: filter 0.5s;
     }
@@ -553,151 +553,189 @@ app.get('/', (c) => {
         ZUKKU BALL — グレーふくろう球体 + チェック柄帽子 + 大きな光る目
         実際のキャラクターに忬せたデザイン
       -->
-      <svg id="zukku-ball" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+      <svg id="zukku-ball" viewBox="0 0 180 200" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- メインボール：グレーのやわらかいファブリック感 -->
-          <radialGradient id="ballGrad" cx="38%" cy="30%" r="68%">
-            <stop offset="0%"   stop-color="#7a7a7a"/>
-            <stop offset="45%"  stop-color="#4a4a4a"/>
-            <stop offset="100%" stop-color="#222222"/>
+          <!-- ===== BALL: ウォームグレー布地球体 ===== -->
+          <!-- メインボール：ウォームグレー、左上からやわらかい光 -->
+          <radialGradient id="ballGrad" cx="36%" cy="28%" r="72%">
+            <stop offset="0%"   stop-color="#C2BAB0"/>
+            <stop offset="30%"  stop-color="#A39A8F"/>
+            <stop offset="65%"  stop-color="#7E7670"/>
+            <stop offset="100%" stop-color="#4A4540"/>
           </radialGradient>
-          <!-- ボール下側の影 -->
-          <radialGradient id="ballShadow" cx="50%" cy="85%" r="50%">
-            <stop offset="0%"   stop-color="rgba(0,0,0,0.5)"/>
+          <!-- ボール底部：やわらかい内側影 -->
+          <radialGradient id="ballBottom" cx="50%" cy="100%" r="55%">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.38)"/>
             <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
           </radialGradient>
-          <!-- 帽子：ベージュ〜ブラウンのチェック地 -->
-          <radialGradient id="hatGrad" cx="40%" cy="30%" r="70%">
-            <stop offset="0%"   stop-color="#d4b896"/>
-            <stop offset="55%"  stop-color="#b89a6e"/>
-            <stop offset="100%" stop-color="#7a5f3a"/>
+          <!-- 落ち影 -->
+          <radialGradient id="dropShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.45)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
           </radialGradient>
-          <!-- 左目グロー（通常：柔らかい白〜クリーム） -->
-          <radialGradient id="eyeNorm" cx="42%" cy="38%" r="58%">
-            <stop offset="0%"   stop-color="#ffffff"/>
-            <stop offset="30%"  stop-color="#fffbe8"/>
-            <stop offset="70%"  stop-color="#d4c07a"/>
-            <stop offset="100%" stop-color="#4a3800"/>
+
+          <!-- ===== HAT: ベージュ格子柄蓋 ===== -->
+          <!-- 帽子のベース：明るめのベージュグレー -->
+          <radialGradient id="hatGrad" cx="42%" cy="35%" r="65%">
+            <stop offset="0%"   stop-color="#D4CEC6"/>
+            <stop offset="50%"  stop-color="#B8B0A4"/>
+            <stop offset="100%" stop-color="#8E8880"/>
           </radialGradient>
-          <!-- 目グロー（listening：ゴールド） -->
-          <radialGradient id="eyeGold" cx="42%" cy="38%" r="58%">
-            <stop offset="0%"   stop-color="#ffffff"/>
-            <stop offset="25%"  stop-color="#fff0a0"/>
-            <stop offset="60%"  stop-color="#C9A84C"/>
-            <stop offset="100%" stop-color="#5a3a00"/>
+          <!-- 帽子のリム（縁の立体感） -->
+          <linearGradient id="hatRim" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#C8C0B6"/>
+            <stop offset="100%" stop-color="#96908A"/>
+          </linearGradient>
+
+          <!-- ===== EYES: リング発光スタイル ===== -->
+          <!-- 目の外枠（ダーク） -->
+          <radialGradient id="eyeOuter" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#1A1612"/>
+            <stop offset="100%" stop-color="#0D0B08"/>
           </radialGradient>
-          <!-- 目グロー（speaking：明るいゴールド） -->
-          <radialGradient id="eyeBright" cx="42%" cy="38%" r="58%">
-            <stop offset="0%"   stop-color="#ffffff"/>
-            <stop offset="20%"  stop-color="#fffde0"/>
-            <stop offset="50%"  stop-color="#E8C96A"/>
-            <stop offset="100%" stop-color="#7a5000"/>
+
+          <!-- 通常状態：白いやわらかなリング発光 -->
+          <radialGradient id="eyeRingNorm" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#1A1612"/>
+            <stop offset="52%"  stop-color="#1A1612"/>
+            <stop offset="62%"  stop-color="#8A8070"/>
+            <stop offset="74%"  stop-color="#EDE8DC"/>
+            <stop offset="84%"  stop-color="#F8F4EC"/>
+            <stop offset="92%"  stop-color="#FFF8F0"/>
+            <stop offset="100%" stop-color="#E8E0D0"/>
           </radialGradient>
-          <!-- ソフトシャドウフィルター -->
-          <filter id="softShadow">
-            <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="rgba(0,0,0,0.6)"/>
+          <!-- listening：ゴールドリング発光 -->
+          <radialGradient id="eyeRingGold" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#1A1612"/>
+            <stop offset="52%"  stop-color="#1A1612"/>
+            <stop offset="62%"  stop-color="#7A5E10"/>
+            <stop offset="74%"  stop-color="#D4A030"/>
+            <stop offset="84%"  stop-color="#E8C050"/>
+            <stop offset="92%"  stop-color="#F5D870"/>
+            <stop offset="100%" stop-color="#C9A84C"/>
+          </radialGradient>
+          <!-- speaking：明るいゴールドリング発光 -->
+          <radialGradient id="eyeRingBright" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#201A08"/>
+            <stop offset="48%"  stop-color="#201A08"/>
+            <stop offset="60%"  stop-color="#A07820"/>
+            <stop offset="72%"  stop-color="#E8C050"/>
+            <stop offset="82%"  stop-color="#F8E080"/>
+            <stop offset="90%"  stop-color="#FFF0A0"/>
+            <stop offset="100%" stop-color="#E8C96A"/>
+          </radialGradient>
+
+          <!-- ===== FILTERS ===== -->
+          <!-- ボールのソフトシャドウ -->
+          <filter id="ballShadowF" x="-10%" y="-5%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="rgba(0,0,0,0.55)" flood-opacity="1"/>
           </filter>
-          <!-- 目のグロウフィルター -->
-          <filter id="eyeGlow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
+          <!-- 目のやわらかいグロウ（通常） -->
+          <filter id="eyeGlowNorm" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <!-- ボールのふわふわ質感（ノイズ） -->
-          <filter id="fabric" x="0" y="0" width="100%" height="100%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
-            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
-            <feBlend in="SourceGraphic" in2="grayNoise" mode="overlay" result="blend"/>
-            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          <!-- 目のグロウ（ゴールド） -->
+          <filter id="eyeGlowGold" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
+          <!-- 帽子クリップ -->
+          <clipPath id="hatClip">
+            <ellipse cx="90" cy="56" rx="65" ry="26"/>
+          </clipPath>
         </defs>
 
-        <!-- === 落ち影 === -->
-        <ellipse cx="90" cy="168" rx="52" ry="8" fill="rgba(0,0,0,0.35)"/>
+        <!-- ===== 落ち影 ===== -->
+        <ellipse cx="90" cy="190" rx="48" ry="7" fill="url(#dropShadow)"/>
 
-        <!-- === メインボール（グレー球体） === -->
-        <circle cx="90" cy="96" r="74" fill="url(#ballGrad)" filter="url(#softShadow)"/>
+        <!-- ===== メインボール（ウォームグレー球体） ===== -->
+        <circle cx="90" cy="108" r="76" fill="url(#ballGrad)" filter="url(#ballShadowF)"/>
 
-        <!-- ボールのファブリック質感ライン（縫い目風） -->
-        <path d="M 30 80 Q 50 72 90 74 Q 130 72 150 80" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" fill="none"/>
-        <path d="M 26 96 Q 50 90 90 92 Q 130 90 154 96" stroke="rgba(255,255,255,0.05)" stroke-width="1" fill="none"/>
-        <path d="M 28 112 Q 52 108 90 110 Q 128 108 152 112" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>
+        <!-- ボールのパネル縫い目（布地感） -->
+        <!-- 縦の縫い目：上から下 -->
+        <path d="M 90 34 Q 87 70 88 108 Q 87 146 90 180"
+              stroke="rgba(60,50,40,0.12)" stroke-width="1.2" fill="none" stroke-dasharray="3,4"/>
+        <!-- 横の縫い目：中段 -->
+        <path d="M 18 98 Q 45 90 90 92 Q 135 90 162 98"
+              stroke="rgba(60,50,40,0.10)" stroke-width="1" fill="none" stroke-dasharray="3,4"/>
+        <!-- 斜め縫い目（左） -->
+        <path d="M 28 72 Q 52 88 60 108 Q 52 128 38 148"
+              stroke="rgba(60,50,40,0.08)" stroke-width="1" fill="none" stroke-dasharray="2,5"/>
+        <!-- 斜め縫い目（右） -->
+        <path d="M 152 72 Q 128 88 120 108 Q 128 128 142 148"
+              stroke="rgba(60,50,40,0.08)" stroke-width="1" fill="none" stroke-dasharray="2,5"/>
 
-        <!-- ボールのハイライト（左上のやわらかい光） -->
-        <ellipse cx="68" cy="62" rx="28" ry="20" fill="rgba(255,255,255,0.1)" transform="rotate(-18,68,62)"/>
-        <ellipse cx="62" cy="58" rx="14" ry="9"  fill="rgba(255,255,255,0.07)" transform="rotate(-18,62,58)"/>
+        <!-- ボールのやわらかいハイライト（布地の光沢） -->
+        <ellipse cx="68" cy="70" rx="30" ry="22" fill="rgba(255,252,245,0.13)" transform="rotate(-16,68,70)"/>
+        <ellipse cx="60" cy="64" rx="16" ry="10" fill="rgba(255,252,245,0.09)" transform="rotate(-16,60,64)"/>
 
-        <!-- ボール底部の影 -->
-        <ellipse cx="90" cy="152" rx="56" ry="22" fill="url(#ballShadow)"/>
+        <!-- ボール底部の内側影 -->
+        <ellipse cx="90" cy="162" rx="60" ry="26" fill="url(#ballBottom)"/>
 
-        <!-- === 帽子（チェック柄ベージュ帽子） === -->
-        <!-- 帽子のメイン -->
-        <ellipse cx="90" cy="34" rx="62" ry="28" fill="url(#hatGrad)"/>
-        <!-- 帽子のつば（下のリム） -->
-        <ellipse cx="90" cy="48" rx="66" ry="13" fill="#c8a87a" opacity="0.9"/>
-        <ellipse cx="90" cy="46" rx="64" ry="11" fill="url(#hatGrad)" opacity="0.95"/>
+        <!-- ===== 帽子（格子柄フラット蓋） ===== -->
+        <!-- 帽子のドーム本体 -->
+        <ellipse cx="90" cy="52" rx="64" ry="24" fill="url(#hatGrad)"/>
+        <!-- 帽子の上部（ドーム感） -->
+        <ellipse cx="90" cy="44" rx="56" ry="18" fill="url(#hatGrad)" opacity="0.9"/>
 
-        <!-- チェック柄ライン（横） -->
-        <line x1="30" y1="22" x2="150" y2="22" stroke="rgba(90,60,20,0.25)" stroke-width="2.5"/>
-        <line x1="28" y1="32" x2="152" y2="32" stroke="rgba(90,60,20,0.25)" stroke-width="2.5"/>
-        <line x1="26" y1="42" x2="154" y2="42" stroke="rgba(90,60,20,0.22)" stroke-width="2"/>
-        <!-- チェック柄ライン（縦） -->
-        <line x1="55" y1="8"  x2="48" y2="52"  stroke="rgba(90,60,20,0.2)" stroke-width="2"/>
-        <line x1="75" y1="6"  x2="70" y2="52"  stroke="rgba(90,60,20,0.2)" stroke-width="2"/>
-        <line x1="90" y1="5"  x2="90" y2="52"  stroke="rgba(90,60,20,0.2)" stroke-width="2"/>
-        <line x1="105" y1="6" x2="110" y2="52" stroke="rgba(90,60,20,0.2)" stroke-width="2"/>
-        <line x1="125" y1="8" x2="132" y2="52" stroke="rgba(90,60,20,0.2)" stroke-width="2"/>
+        <!-- 格子柄テクスチャ（横ライン） — 帽子の上にクリップ -->
+        <g clip-path="url(#hatClip)" opacity="0.55">
+          <line x1="26" y1="36" x2="154" y2="36" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="26" y1="43" x2="154" y2="43" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="26" y1="50" x2="154" y2="50" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="26" y1="57" x2="154" y2="57" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="26" y1="64" x2="154" y2="64" stroke="#6E675E" stroke-width="1.2"/>
+          <!-- 縦ライン -->
+          <line x1="48"  y1="28" x2="44"  y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="62"  y1="28" x2="60"  y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="75"  y1="28" x2="75"  y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="90"  y1="27" x2="90"  y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="105" y1="28" x2="105" y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="118" y1="28" x2="120" y2="72" stroke="#6E675E" stroke-width="1.2"/>
+          <line x1="132" y1="28" x2="136" y2="72" stroke="#6E675E" stroke-width="1.2"/>
+        </g>
 
-        <!-- 帽子のつば前縁（影） -->
-        <ellipse cx="90" cy="50" rx="65" ry="8" fill="rgba(0,0,0,0.15)"/>
-        <!-- 帽子のシャイン -->
-        <ellipse cx="78" cy="20" rx="22" ry="10" fill="rgba(255,255,255,0.12)" transform="rotate(-10,78,20)"/>
+        <!-- 帽子のリム（縁の立体感） -->
+        <ellipse cx="90" cy="66" rx="66" ry="10" fill="url(#hatRim)" opacity="0.88"/>
+        <ellipse cx="90" cy="64" rx="65" ry="8"  fill="rgba(180,172,162,0.5)"/>
+        <!-- リムの下端シャドウ -->
+        <ellipse cx="90" cy="70" rx="63" ry="6"  fill="rgba(0,0,0,0.18)"/>
+        <!-- 帽子のやわらかいハイライト -->
+        <ellipse cx="76" cy="42" rx="24" ry="10" fill="rgba(255,252,245,0.14)" transform="rotate(-8,76,42)"/>
 
-        <!-- === 耳（ふくろうの耳羽） === -->
-        <ellipse cx="44" cy="32" rx="10" ry="16" fill="#3a3a3a" transform="rotate(-20,44,32)"/>
-        <ellipse cx="136" cy="32" rx="10" ry="16" fill="#3a3a3a" transform="rotate(20,136,32)"/>
-        <ellipse cx="44" cy="32" rx="6"  ry="10"  fill="#5a5a5a" transform="rotate(-20,44,32)"/>
-        <ellipse cx="136" cy="32" rx="6"  ry="10"  fill="#5a5a5a" transform="rotate(20,136,32)"/>
+        <!-- ===== 目（ドーナツ型リング発光） ===== -->
+        <!-- 目の土台（ダーク） -->
+        <circle cx="64"  cy="106" r="26" fill="url(#eyeOuter)"/>
+        <circle cx="116" cy="106" r="26" fill="url(#eyeOuter)"/>
 
-        <!-- === 目（大きく光る丸い目、ふくろうらしく） === -->
-        <!-- 目の外側リング（グレー） -->
-        <circle cx="66"  cy="100" r="24" fill="#1a1a1a" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-        <circle cx="114" cy="100" r="24" fill="#1a1a1a" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+        <!-- 目本体：リング発光グラデーション（通常） -->
+        <circle id="eye-l" cx="64"  cy="106" r="24" fill="url(#eyeRingNorm)" filter="url(#eyeGlowNorm)"/>
+        <circle id="eye-r" cx="116" cy="106" r="24" fill="url(#eyeRingNorm)" filter="url(#eyeGlowNorm)"/>
 
-        <!-- 目の内側リング（ゴールドアクセント） -->
-        <circle cx="66"  cy="100" r="21" fill="#0d0d0d" stroke="rgba(201,168,76,0.35)" stroke-width="1.5"/>
-        <circle cx="114" cy="100" r="21" fill="#0d0d0d" stroke="rgba(201,168,76,0.35)" stroke-width="1.5"/>
+        <!-- 瞳（中心の暗い部分） -->
+        <circle id="pupil-l" cx="64"  cy="106" r="12" fill="#100E0A"/>
+        <circle id="pupil-r" cx="116" cy="106" r="12" fill="#100E0A"/>
 
-        <!-- 目本体（光るレンズ） -->
-        <circle id="eye-l" cx="66"  cy="100" r="18" fill="url(#eyeNorm)" filter="url(#eyeGlow)"/>
-        <circle id="eye-r" cx="114" cy="100" r="18" fill="url(#eyeNorm)" filter="url(#eyeGlow)"/>
+        <!-- 瞳の奥の光点（ガラスのような反射） -->
+        <circle cx="58"  cy="100" r="3.5" fill="rgba(255,252,245,0.45)"/>
+        <circle cx="110" cy="100" r="3.5" fill="rgba(255,252,245,0.45)"/>
+        <circle cx="56"  cy="98"  r="1.5" fill="rgba(255,255,255,0.65)"/>
+        <circle cx="108" cy="98"  r="1.5" fill="rgba(255,255,255,0.65)"/>
 
-        <!-- 瞳 -->
-        <circle id="pupil-l" cx="66"  cy="100" r="8" fill="#0a0a1a"/>
-        <circle id="pupil-r" cx="114" cy="100" r="8" fill="#0a0a1a"/>
+        <!-- ===== クチバシ（ふくろうらしい小さなくちばし） ===== -->
+        <path d="M 86 118 Q 90 124 94 118 Q 90 121 86 118 Z"
+              fill="#7A6A50" opacity="0.75"/>
 
-        <!-- 目のハイライト -->
-        <circle cx="60"  cy="94" r="4.5" fill="rgba(255,255,255,0.55)"/>
-        <circle cx="108" cy="94" r="4.5" fill="rgba(255,255,255,0.55)"/>
-        <circle cx="57"  cy="92" r="2"   fill="rgba(255,255,255,0.75)"/>
-        <circle cx="105" cy="92" r="2"   fill="rgba(255,255,255,0.75)"/>
+        <!-- ===== おなかのボタン ===== -->
+        <circle cx="90" cy="154" r="13" fill="#141210" stroke="rgba(201,168,76,0.5)" stroke-width="1.8"/>
+        <circle id="belly-glow" cx="90" cy="154" r="10" fill="#3a8a3a" opacity="0.92"/>
+        <circle cx="90" cy="154" r="6"   fill="rgba(255,255,255,0.16)"/>
+        <circle cx="88" cy="152" r="2.5" fill="rgba(255,255,255,0.42)"/>
 
-        <!-- 目と目の間（鼻の突起、ふくろうらしく） -->
-        <ellipse cx="90" cy="108" rx="8" ry="5" fill="#5a5030" opacity="0.7"/>
-        <ellipse cx="90" cy="107" rx="5" ry="3" fill="#7a6a40" opacity="0.8"/>
-
-        <!-- === ほっぺ（かわいさアップ） === -->
-        <ellipse cx="40"  cy="116" rx="12" ry="8" fill="rgba(220,160,160,0.18)"/>
-        <ellipse cx="140" cy="116" rx="12" ry="8" fill="rgba(220,160,160,0.18)"/>
-
-        <!-- === おなかのボタン === -->
-        <circle cx="90" cy="144" r="14" fill="#1a1a1a" stroke="rgba(201,168,76,0.45)" stroke-width="2"/>
-        <circle id="belly-glow" cx="90" cy="144" r="11" fill="#3a8a3a" opacity="0.9"/>
-        <circle cx="90" cy="144" r="6.5" fill="rgba(255,255,255,0.18)"/>
-        <circle cx="88" cy="142" r="3"   fill="rgba(255,255,255,0.45)"/>
-
-        <!-- === 小さな足（R2D2らしいアクセント） === -->
-        <ellipse cx="74"  cy="168" rx="10" ry="5" fill="#2a2a2a" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
-        <ellipse cx="106" cy="168" rx="10" ry="5" fill="#2a2a2a" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+        <!-- ===== 小さな足 ===== -->
+        <ellipse cx="75"  cy="180" rx="9" ry="4" fill="#2A2520" stroke="rgba(201,168,76,0.18)" stroke-width="1"/>
+        <ellipse cx="105" cy="180" rx="9" ry="4" fill="#2A2520" stroke="rgba(201,168,76,0.18)" stroke-width="1"/>
       </svg>
 
       <div class="ball-label">ズック</div>
@@ -871,25 +909,37 @@ function setBallState(s) {
   const pupilR = document.getElementById('pupil-r')
   const belly  = document.getElementById('belly-glow')
   if (s === 'listening') {
-    eyeL.setAttribute('fill', 'url(#eyeGold)')
-    eyeR.setAttribute('fill', 'url(#eyeGold)')
-    pupilL.setAttribute('r', '6'); pupilR.setAttribute('r', '6')
+    // リング発光 → ゴールドリング
+    eyeL.setAttribute('fill', 'url(#eyeRingGold)')
+    eyeR.setAttribute('fill', 'url(#eyeRingGold)')
+    eyeL.setAttribute('filter', 'url(#eyeGlowGold)')
+    eyeR.setAttribute('filter', 'url(#eyeGlowGold)')
+    pupilL.setAttribute('r', '10'); pupilR.setAttribute('r', '10')
     belly.setAttribute('fill', '#C9A84C')
     startWaveAnimation()
   } else if (s === 'speaking') {
-    eyeL.setAttribute('fill', 'url(#eyeBright)')
-    eyeR.setAttribute('fill', 'url(#eyeBright)')
+    // リング発光 → 明るいゴールドリング（大きく開いた瞳）
+    eyeL.setAttribute('fill', 'url(#eyeRingBright)')
+    eyeR.setAttribute('fill', 'url(#eyeRingBright)')
+    eyeL.setAttribute('filter', 'url(#eyeGlowGold)')
+    eyeR.setAttribute('filter', 'url(#eyeGlowGold)')
     pupilL.setAttribute('r', '9'); pupilR.setAttribute('r', '9')
     belly.setAttribute('fill', '#E8C96A')
   } else if (s === 'thinking') {
-    eyeL.setAttribute('fill', 'url(#eyeNorm)')
-    eyeR.setAttribute('fill', 'url(#eyeNorm)')
-    pupilL.setAttribute('r', '7'); pupilR.setAttribute('r', '7')
-    belly.setAttribute('fill', '#888')
+    // 考え中：やや暗めのリング
+    eyeL.setAttribute('fill', 'url(#eyeRingNorm)')
+    eyeR.setAttribute('fill', 'url(#eyeRingNorm)')
+    eyeL.setAttribute('filter', 'url(#eyeGlowNorm)')
+    eyeR.setAttribute('filter', 'url(#eyeGlowNorm)')
+    pupilL.setAttribute('r', '13'); pupilR.setAttribute('r', '13')
+    belly.setAttribute('fill', '#666')
   } else {
-    eyeL.setAttribute('fill', 'url(#eyeNorm)')
-    eyeR.setAttribute('fill', 'url(#eyeNorm)')
-    pupilL.setAttribute('r', '8'); pupilR.setAttribute('r', '8')
+    // idle：通常の白いリング発光
+    eyeL.setAttribute('fill', 'url(#eyeRingNorm)')
+    eyeR.setAttribute('fill', 'url(#eyeRingNorm)')
+    eyeL.setAttribute('filter', 'url(#eyeGlowNorm)')
+    eyeR.setAttribute('filter', 'url(#eyeGlowNorm)')
+    pupilL.setAttribute('r', '12'); pupilR.setAttribute('r', '12')
     belly.setAttribute('fill', '#3a8a3a')
     stopWaveAnimation()
   }
