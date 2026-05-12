@@ -744,6 +744,113 @@ app.get('/', (c) => {
     .kite-dash-link { font-size: 10px; color: rgba(120,170,220,0.45); text-decoration: none; white-space: nowrap; transition: color 0.2s; }
     .kite-dash-link:hover { color: #7BC4FF; }
 
+    /* ============================================
+       BUDGET SETUP MODAL
+       ============================================ */
+    #budget-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88); backdrop-filter: blur(14px);
+      z-index: 600; align-items: center; justify-content: center;
+    }
+    #budget-modal.active { display: flex; }
+    .budget-card {
+      background: var(--surface2); border: 1px solid var(--gold-dim);
+      border-radius: 16px; padding: 36px 40px; max-width: 420px; width: 90%;
+      box-shadow: 0 0 60px rgba(201,168,76,0.15);
+    }
+    .budget-zukku-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .budget-zukku-icon { font-size: 38px; }
+    .budget-zukku-speech {
+      background: rgba(201,168,76,0.08); border: 1px solid var(--gold-dim);
+      border-radius: 10px 10px 10px 2px; padding: 10px 14px;
+      font-size: 13px; font-weight: 100; line-height: 1.8; color: var(--white); flex: 1;
+    }
+    .budget-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .budget-preset-btn {
+      background: var(--surface3); border: 1px solid var(--border);
+      color: var(--white-dim); padding: 8px 16px; border-radius: 20px;
+      font-family: 'Noto Sans JP', sans-serif; font-size: 12px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .budget-preset-btn:hover, .budget-preset-btn.selected {
+      border-color: var(--gold); color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+    .budget-custom-row { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; }
+    .budget-custom-input {
+      flex: 1; background: var(--surface3); border: 1px solid var(--border);
+      color: var(--white); padding: 10px 14px; font-size: 14px;
+      border-radius: 8px; outline: none; font-family: 'Noto Sans JP', sans-serif;
+    }
+    .budget-custom-input:focus { border-color: var(--gold); }
+    .budget-unit { font-size: 12px; color: var(--white-dim); white-space: nowrap; }
+    .budget-session-info {
+      background: rgba(30,80,160,0.12); border: 1px solid rgba(99,179,255,0.15);
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 20px;
+      font-size: 11px; color: rgba(120,170,220,0.7); line-height: 1.7;
+    }
+    .budget-submit-btn {
+      width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #000; border: none; padding: 14px; border-radius: 28px;
+      font-family: 'Noto Sans JP', sans-serif; font-weight: 400;
+      font-size: 13px; letter-spacing: 0.15em; cursor: pointer; transition: all 0.3s;
+    }
+    .budget-submit-btn:hover { box-shadow: 0 0 32px rgba(201,168,76,0.4); }
+
+    /* ============================================
+       AGENT-TO-AGENT CONCEPT PANEL
+       ============================================ */
+    .a2a-panel {
+      background: linear-gradient(135deg, #0d1a0a 0%, #0f1f0d 60%, #091408 100%);
+      border: 1px solid rgba(74,255,140,0.25);
+      border-radius: 14px; padding: 22px 24px; margin-bottom: 22px;
+      box-shadow: 0 0 28px rgba(30,180,80,0.08);
+    }
+    .a2a-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .a2a-icon { font-size: 20px; }
+    .a2a-title { font-size: 13px; color: #6ee06e; letter-spacing: 0.06em; font-weight: 600; flex: 1; }
+    .a2a-badge {
+      font-size: 9px; color: #4AFF8C; background: rgba(74,255,140,0.10);
+      border: 1px solid rgba(74,255,140,0.25); border-radius: 20px;
+      padding: 2px 10px; letter-spacing: 0.05em;
+    }
+    .a2a-flow {
+      display: flex; align-items: stretch; gap: 0;
+      margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px;
+    }
+    .a2a-node {
+      flex: 1; min-width: 90px; background: rgba(20,50,20,0.40);
+      border: 1px solid rgba(74,255,140,0.18); border-radius: 10px;
+      padding: 12px 8px; text-align: center;
+    }
+    .a2a-node-icon { font-size: 22px; margin-bottom: 5px; }
+    .a2a-node-label { font-size: 10px; color: rgba(160,230,160,0.80); line-height: 1.4; }
+    .a2a-node-sub { font-size: 8px; color: rgba(100,180,100,0.50); margin-top: 3px; }
+    .a2a-arrow {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 0 5px; gap: 2px; flex-shrink: 0;
+    }
+    .a2a-arrow-line { color: rgba(74,255,140,0.50); font-size: 14px; }
+    .a2a-arrow-label { font-size: 8px; color: rgba(74,255,140,0.40); white-space: nowrap; }
+    .a2a-log {
+      background: rgba(5,15,5,0.70); border: 1px solid rgba(74,255,140,0.10);
+      border-radius: 7px; padding: 8px 12px; max-height: 130px; overflow-y: auto;
+      font-size: 10px; font-family: monospace;
+    }
+    .a2a-log-line { color: rgba(120,210,120,0.70); padding: 2px 0; border-bottom: 1px solid rgba(74,255,140,0.05); }
+    .a2a-log-line:last-child { border-bottom: none; }
+    .a2a-log-line.highlight { color: #4AFF8C; }
+    .a2a-log-line.payment { color: #FFD700; }
+    .a2a-simulate-btn {
+      width: 100%; background: transparent;
+      border: 1px solid rgba(74,255,140,0.30); color: #6ee06e;
+      padding: 9px; border-radius: 8px; font-size: 12px;
+      cursor: pointer; transition: all 0.2s; margin-top: 12px;
+      font-family: 'Noto Sans JP', sans-serif; letter-spacing: 0.05em;
+    }
+    .a2a-simulate-btn:hover { background: rgba(74,255,140,0.08); border-color: rgba(74,255,140,0.60); }
+    .a2a-simulate-btn:disabled { opacity: 0.4; pointer-events: none; }
+
     /* LOADING */
     #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(10px); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
     #loading-overlay.active { display: flex; }
@@ -1262,6 +1369,55 @@ app.get('/', (c) => {
       <div class="complete-summary" id="booking-summary">ズックがすべての手配を完了いたしました。</div>
     </div>
 
+    <!-- AGENT-TO-AGENT CONCEPT PANEL -->
+    <div class="a2a-panel">
+      <div class="a2a-header">
+        <span class="a2a-icon">⟳</span>
+        <span class="a2a-title">Agent-to-Agent Payment — Kite x402</span>
+        <span class="a2a-badge">CONCEPT DEMO</span>
+      </div>
+      <div class="a2a-flow">
+        <div class="a2a-node">
+          <div class="a2a-node-icon">🦉</div>
+          <div class="a2a-node-label">ZUKKUエージェント</div>
+          <div class="a2a-node-sub">Kite Passport保持</div>
+        </div>
+        <div class="a2a-arrow">
+          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-label">交渉・条件確認</div>
+        </div>
+        <div class="a2a-node">
+          <div class="a2a-node-icon">🏡</div>
+          <div class="a2a-node-label">宿主エージェント</div>
+          <div class="a2a-node-sub">x402 API公開</div>
+        </div>
+        <div class="a2a-arrow">
+          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-label">HTTP 402 + 決済</div>
+        </div>
+        <div class="a2a-node">
+          <div class="a2a-node-icon">⬡</div>
+          <div class="a2a-node-label">Kite Passport</div>
+          <div class="a2a-node-sub">USDC on Kite Chain</div>
+        </div>
+        <div class="a2a-arrow">
+          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-label">確認・完了</div>
+        </div>
+        <div class="a2a-node">
+          <div class="a2a-node-icon">✅</div>
+          <div class="a2a-node-label">予約・手配完了</div>
+          <div class="a2a-node-sub">ユーザー承認不要</div>
+        </div>
+      </div>
+      <div class="a2a-log" id="a2a-log">
+        <div class="a2a-log-line">[ Kite Agent Passport ] 待機中 — ▶ ボタンでA2Aシミュレーション開始</div>
+      </div>
+      <button class="a2a-simulate-btn" id="a2a-simulate-btn" onclick="runA2ASimulation()">
+        ▶ Agent-to-Agent 交渉シミュレーションを実行
+      </button>
+    </div>
+
     <!-- KITE PASSPORT PANEL -->
     <div id="kite-panel" class="kite-panel">
       <div class="kite-panel-header">
@@ -1341,6 +1497,40 @@ app.get('/', (c) => {
 
   <div id="loading-overlay"><div class="spinner"></div><div class="loading-text" id="loading-text">処理中...</div></div>
   <div id="toast"></div>
+
+  <!-- BUDGET SETUP MODAL -->
+  <div id="budget-modal">
+    <div class="budget-card">
+      <div class="budget-zukku-row">
+        <div class="budget-zukku-icon">🦉</div>
+        <div class="budget-zukku-speech">
+          ホホウ、いらっしゃいませ！<br>
+          まず、ご旅行のご予算をお聞かせください。<br>
+          Kite Passportに予算を設定し、ルール内でズックが自動手配いたします。
+        </div>
+      </div>
+      <div class="budget-presets">
+        <button class="budget-preset-btn" data-amount="200" onclick="selectBudgetPreset(this)">$200</button>
+        <button class="budget-preset-btn" data-amount="500" onclick="selectBudgetPreset(this)">$500</button>
+        <button class="budget-preset-btn selected" data-amount="1000" onclick="selectBudgetPreset(this)">$1,000</button>
+        <button class="budget-preset-btn" data-amount="2000" onclick="selectBudgetPreset(this)">$2,000</button>
+        <button class="budget-preset-btn" data-amount="5000" onclick="selectBudgetPreset(this)">$5,000+</button>
+      </div>
+      <div class="budget-custom-row">
+        <input type="number" id="budget-custom-input" class="budget-custom-input"
+               placeholder="金額を入力" value="1000" min="1">
+        <span class="budget-unit">USD</span>
+      </div>
+      <div class="budget-session-info">
+        ⬡ Kite Passport セッション設定<br>
+        予算上限: 入力金額 / 1回の上限: $50 / 有効期間: 24h<br>
+        <span style="color:rgba(74,255,140,0.6)">※ 予算内の小額購入はズックが自動実行。大きな体験は承認をお求めします。</span>
+      </div>
+      <button class="budget-submit-btn" onclick="submitBudget()">
+        この予算でスタート →
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1855,13 +2045,18 @@ async function kiteInit() {
 // x402 天気情報購入
 async function kiteWeatherPurchase() {
   const city = document.getElementById('kite-city-select').value
+  const cityJa = { Tokyo:'東京', Kyoto:'京都', Osaka:'大阪', Sapporo:'札幌',
+    Fukuoka:'福岡', Yakushima:'屋久島', Shirakawa:'白川郷' }[city] || city
   const btn = document.querySelector('.kite-pay-btn')
   btn.classList.add('loading')
   btn.textContent = '⬡ 処理中…'
 
-  // ログにペンディング追加
   const logId = Date.now()
-  kiteAddTxLog(logId, '⏳', city + ' 天気情報', '$0.01 USDC', 'x402決済リクエスト中…')
+  // ① 何を購入するか明記
+  kiteAddTxLog(logId, '⏳',
+    '旅先天気情報の取得 — ' + cityJa,
+    '$0.01 USDC',
+    'weather.hugen.tokyo へ x402決済リクエスト送信中…')
 
   try {
     const res = await fetch('/api/kite/weather', {
@@ -1870,24 +2065,35 @@ async function kiteWeatherPurchase() {
       body: JSON.stringify({ city, type: 'current' }),
     })
     const data = await res.json()
+    const ts = new Date().toLocaleTimeString('ja-JP')
 
-    if (data.x402_attempted) {
-      // x402フロー実行済み（残高不足だが決済は試みた）
-      kiteUpdateTxLog(logId, '⬡', city + ' 天気情報 (x402実行)', '$0.01 USDC',
-        'x402プロトコル実行 — ウォレット残高追加で決済完了')
-      showToast('⬡ x402フロー実行完了（残高追加で決済有効）')
-    } else if (data.paid) {
-      kiteUpdateTxLog(logId, '✅', city + ' 天気情報', '$0.01 USDC',
-        'TX: ' + (data.tx_hash || '').slice(0,16) + '…')
+    if (data.paid) {
+      // 実際に決済成功
+      kiteUpdateTxLog(logId, '✅',
+        '旅先天気情報の取得 — ' + cityJa,
+        '$0.01 USDC',
+        'Kite x402決済完了 | TX: ' + (data.tx_hash||'').slice(0,14) + '… | ' + ts)
       showToast('✅ Kite x402決済完了！')
+    } else if (data.x402_attempted) {
+      // x402フロー実行済み（残高不足）
+      kiteUpdateTxLog(logId, '⬡',
+        '旅先天気情報の取得 — ' + cityJa + ' [x402実行済]',
+        '$0.01 USDC',
+        'HTTP 402受信 → Kite Passportへ決済試行 → 残高不足 | ' + ts)
+      showToast('⬡ x402フロー実行済み（残高追加で決済完了）')
     } else {
-      kiteUpdateTxLog(logId, '◉', city + ' 天気情報 (サンプル)', '$0.01 USDC', 'x402ヘッダー確認済み')
+      kiteUpdateTxLog(logId, '◉',
+        '旅先天気情報の取得 — ' + cityJa,
+        '$0.01 USDC',
+        'サンプルデータ取得 | x402ヘッダー確認済み | ' + ts)
     }
 
-    // 天気データ表示
     kiteShowWeather(city, data.data)
   } catch(e) {
-    kiteUpdateTxLog(logId, '❌', city + ' 天気情報', '$0.01 USDC', 'エラー: ' + e.message)
+    kiteUpdateTxLog(logId, '❌',
+      '旅先天気情報の取得 — ' + cityJa,
+      '$0.01 USDC',
+      'エラー: ' + e.message)
   } finally {
     btn.classList.remove('loading')
     btn.innerHTML = '<span class="kite-pay-icon">⬡</span> x402で購入'
@@ -1910,6 +2116,8 @@ function kiteAddTxLog(id, icon, label, amount, meta) {
     <span class="kite-tx-amount">\${amount}</span>
   \`
   log.prepend(el)
+  // メインTXフィードにも反映
+  kiteAddToMainTxFeed(icon, label, amount, meta)
 }
 
 function kiteUpdateTxLog(id, icon, label, amount, meta) {
@@ -1923,6 +2131,101 @@ function kiteUpdateTxLog(id, icon, label, amount, meta) {
     </div>
     <span class="kite-tx-amount">\${amount}</span>
   \`
+}
+
+// ============================================
+// BUDGET MODAL
+// ============================================
+let budgetState = { amount: 0, currency: 'USD' }
+
+function selectBudgetPreset(btn) {
+  document.querySelectorAll('.budget-preset-btn').forEach(b => b.classList.remove('selected'))
+  btn.classList.add('selected')
+  document.getElementById('budget-custom-input').value = btn.dataset.amount
+}
+
+function showBudgetModal() {
+  document.getElementById('budget-modal').classList.add('active')
+}
+
+function closeBudgetModal() {
+  document.getElementById('budget-modal').classList.remove('active')
+}
+
+function submitBudget() {
+  const val = parseFloat(document.getElementById('budget-custom-input').value) || 0
+  if (val <= 0) { showToast('予算を入力してください'); return }
+  budgetState.amount = val
+  closeBudgetModal()
+  // チャットに反映
+  addMessage('user', \`予算は $\${val} USD でお願いします\`)
+  const reply = \`ホホウ！かしこまりました。$\${val} USD の予算で、ズックが全力で最適な一択をコーディネートいたします。Kite Passportに予算セッションを設定し、ルール内で自動手配いたします。どんな旅をご希望ですか？\`
+  addMessage('assistant', reply)
+  speak(reply)
+  // Kiteパネルの上限表示を更新
+  const limits = document.querySelectorAll('.kite-limit')
+  if (limits.length >= 2) limits[1].textContent = \`予算: $\${val}\`
+  showToast(\`✓ 予算 $\${val} USD を設定しました\`)
+}
+
+// ============================================
+// A2A SIMULATION
+// ============================================
+const A2A_STEPS = [
+  { cls: '', text: '[ ZUKKU ] システム起動 — Kite Passport セッション agent_session_019e1948... を確認' },
+  { cls: '', text: '[ ZUKKU → 屋久島 森の宿 縄文庵 ] HTTP GET /api/availability?date=2025-06-01&guests=2' },
+  { cls: 'highlight', text: '[ 縄文庵 ] 200 OK | 空き有 | 標準価格 $302/泊' },
+  { cls: '', text: '[ ZUKKU ] 交渉開始 — POST /api/negotiate { guests:2, nights:3, preference:"secluded" }' },
+  { cls: 'highlight', text: '[ 縄文庵 ] 交渉応答: $280/泊 (値引き 7.3%) | 専属ガイド付き' },
+  { cls: '', text: '[ ZUKKU ] 条件承認 — POST /api/book { session_id:"...", nights:3 }' },
+  { cls: 'payment', text: '[ 縄文庵 ] HTTP 402 Payment Required' },
+  { cls: 'payment', text: '  payment-required: { network:"kite-2366", amount:"840.00", currency:"USDC", address:"0x9f3a..." }' },
+  { cls: 'payment', text: '[ ZUKKU → Kite Passport ] x402決済リクエスト | $840 USDC | セッション上限内を確認...' },
+  { cls: 'payment', text: '[ Kite Passport ] 決済実行 | TX: 0x7f2c...a491 | ブロック確認待機中...' },
+  { cls: 'highlight', text: '[ Kite Chain #2366 ] ブロック確認完了 | TX: 0x7f2c4d8e...a491 | USDC $840.00 送金完了' },
+  { cls: 'highlight', text: '[ 縄文庵 ] 予約確認 | ブッキングID: YKS-20250601-042 | チェックイン 2025-06-01' },
+  { cls: '', text: '[ ZUKKU ] 関連アイテム自動購入中 — トレッキングソックス, 行動食セット...' },
+  { cls: 'highlight', text: '[ COMPLETE ] 全手配完了 — ユーザー決済操作: 0回 | Kite x402により完全自律実行 ♥' },
+]
+
+async function runA2ASimulation() {
+  const btn = document.getElementById('a2a-simulate-btn')
+  const log = document.getElementById('a2a-log')
+  btn.disabled = true
+  btn.textContent = '実行中…'
+  log.innerHTML = ''
+  for (const step of A2A_STEPS) {
+    await new Promise(r => setTimeout(r, 400))
+    const line = document.createElement('div')
+    line.className = 'a2a-log-line' + (step.cls ? ' ' + step.cls : '')
+    line.textContent = step.text
+    log.appendChild(line)
+    log.scrollTop = log.scrollHeight
+  }
+  btn.disabled = false
+  btn.textContent = '↺ 再実行'
+  showToast('✓ A2Aシミュレーション完了 — ユーザー決済なしで全手配！')
+}
+
+// メインTXフィード（トランザクションに購入内容の文字情報を表示）
+function kiteAddToMainTxFeed(icon, label, amount, meta) {
+  const feed = document.getElementById('tx-feed')
+  if (!feed) return
+  feed.classList.add('visible')
+  const item = document.createElement('div')
+  item.className = 'tx-item'
+  // 購入内容 + 金額 + ハッシュ代わりのメタ情報を文字で表示
+  const hashPart = meta.includes('TX:') ? meta : 'Kite x402 — ' + label
+  item.innerHTML = \`
+    <div class="tx-dot"></div>
+    <div style="flex:1">
+      <div class="tx-detail" style="color:var(--white);font-size:11px;margin-bottom:2px">
+        \${icon} <strong>\${label}</strong>
+      </div>
+      <div class="tx-hash">\${amount} &nbsp;|&nbsp; \${hashPart}</div>
+    </div>
+  \`
+  feed.prepend(item)
 }
 
 function kiteShowWeather(city, data) {
@@ -2023,7 +2326,11 @@ window.addEventListener('load', () => {
   state.recognition = initRecognition()
   setStep(1)
   kiteInit()
-  setTimeout(() => speak('ホホウ、いらっしゃいませ！わたくしズックと申します。温泉・自然・食文化など、あなただけの特別な体験をご提案いたします。どんな旅をご希望でしょうか？'), 1200)
+  // 起動時にまずズックの挨拶を流してから予算モーダルを表示
+  setTimeout(() => {
+    speak('ホホウ、いらっしゃいませ！わたくしズックと申します。まず、ご旅行のご予算をお聞かせください。')
+  }, 800)
+  setTimeout(() => showBudgetModal(), 2200)
 })
 </script>
 </body>
