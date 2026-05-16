@@ -6,6 +6,10 @@ type Bindings = { AI: Ai }
 const app = new Hono<{ Bindings: Bindings }>()
 app.use('/api/*', cors())
 app.use('/static/*', serveStatic({ root: './public' }))
+app.get('/favicon.svg', (c) => {
+  return c.body('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="22" font-size="20" text-anchor="middle" fill="#C9A84C" font-family="serif">✦</text></svg>', 200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' })
+})
+app.get('/favicon.ico', (c) => c.body('', 200))
 
 // ===== ZUKKU System Prompt =====
 const ZUKKU_SYSTEM_PROMPT = `You are ZUKKU, a small owl-shaped robot developed by Hatapro, currently working as an agent for 'Flattora', a premium travel concierge service.
@@ -1736,7 +1740,7 @@ function handleAction(action) {
 function localFallback(msg) {
   const m = msg.toLowerCase()
   if (m.includes('ryokan') || m.includes('onsen') || m.includes('travel') || m.includes('experience') || m.includes('retreat') || m.includes('japan') || m.includes('宿') || m.includes('温泉') || m.includes('旅') || m.includes('体験') || m.includes('探') || m.includes('秘境'))
-    return { text: 'Oh-ho! Leave it to ZUKKU. Here are the finest hidden retreats and experiences I\'ve curated for you!', action: 'search_ryokan' }
+    return { text: "Oh-ho! Leave it to ZUKKU. Here are the finest hidden retreats and experiences I've curated for you!", action: 'search_ryokan' }
   if (m.includes('wallet') || m.includes('connect') || m.includes('ウォレット') || m.includes('接続')) return { text: 'My tummy button just lit up! Connecting your wallet right now.', action: 'connect_wallet' }
   if (m.includes('book') || m.includes('approve') || m.includes('reserve') || m.includes('予約') || m.includes('承認')) return { text: 'Understood. Your approval is all it takes — ZUKKU will handle everything from there.', action: 'show_authorize' }
   if (m.includes('rules') || m.includes('settings') || m.includes('limit') || m.includes('ルール') || m.includes('設定')) return { text: 'Opening your agent rule settings.', action: 'open_rules' }
@@ -1792,7 +1796,7 @@ async function searchExperiences() {
       renderExperiences(data.experiences)
       setStep(1)
       setBallState('idle')
-      speak('Oh-ho! I\'ve found ' + data.experiences.length + ' incredible experiences just for you. Take your pick!')
+      speak("Oh-ho! I've found " + data.experiences.length + " incredible experiences just for you. Take your pick!")
     } catch(e) { setBallState('idle'); speak('The connection seems a little unstable. Please try again.') }
   })
 }
