@@ -913,9 +913,9 @@ app.get('/', (c) => {
       <div class="ball-aura"></div>
       <div class="ball-aura"></div>
 
-      <!-- ZUKKU real photo — blue version -->
+      <!-- ZUKKU real photo — blue version (locally served) -->
       <img id="zukku-ball"
-           src="https://www.genspark.ai/api/files/s/C8w7oMLj"
+           src="/static/zukku_blue.png"
            alt="ZUKKU"
            width="220"
            style="height:auto;position:relative;z-index:2;object-fit:contain;
@@ -1217,13 +1217,18 @@ app.get('/', (c) => {
 
 <script>
 // ===== TTS PREPROCESSING =====
-// "ZUKKU" is spoken naturally by the en-US voice as "ZUK-koo" — phonetically close to Japanese.
-// No character substitution needed. Only fix hiragana typos for consistency.
+// ZUKKU must be pronounced as "ズック" (Zukku). We use SSML-style phonetic spelling:
+// Replace ZUKKU with "Zukku" spelled out in a way the en-US voice reads as "ZUK-koo".
+// Best approach: replace with the IPA-friendly spelling "Zuku" which en-US voices
+// naturally pronounce as the two-syllable "ZOO-koo" — closest to Japanese "ズック".
 function preprocessTTS(text) {
-  // "ZUKKU" is spoken naturally by the en-US voice engine as "ZUK-koo".
-  // No conversion needed — the English voice pronounces it correctly.
-  // Only convert hiragana typo to display-friendly katakana for UI text.
-  return text.replace(/ずっく/g, 'ZUKKU')
+  // Replace ZUKKU/Zukku/zukku with phonetic spelling so en-US TTS says "ZOO-koo" (≈ ズック)
+  // "Zooku" reliably triggers the correct two-syllable pronunciation in most en-US voices
+  return text
+    .replace(/ZUKKU/g, 'Zooku')
+    .replace(/Zukku/g, 'Zooku')
+    .replace(/zukku/g, 'Zooku')
+    .replace(/ずっく/g, 'Zooku')
 }
 
 // ===== EXPERIENCE ICONS =====
@@ -1267,8 +1272,8 @@ function setBallState(s) {
 }
 
 // ===== TTS =====
-// Always speaks in en-US for natural native English pronunciation.
-// ZUKKU is spoken naturally as "ZUK-koo" by the English voice engine — no conversion needed.
+// Always speaks in en-US. "ZUKKU" is converted to "Zooku" by preprocessTTS()
+// so the en-US voice engine pronounces it as "ZOO-koo" ≈ Japanese "ズック".
 function speak(text, onEnd) {
   if (!state.synthesis) return onEnd && onEnd()
   state.synthesis.cancel()
