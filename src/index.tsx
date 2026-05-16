@@ -8,69 +8,69 @@ app.use('/api/*', cors())
 app.use('/static/*', serveStatic({ root: './public' }))
 
 // ===== ZUKKU System Prompt =====
-const ZUKKU_SYSTEM_PROMPT = `あなたは「ズック」です。ハタプロが開発した小型フクロウ型ロボットで、今は「Flattora」という最高級旅行コンシェルジュサービスのエージェントとして働いています。
+const ZUKKU_SYSTEM_PROMPT = `You are ZUKKU, a small owl-shaped robot developed by Hatapro, currently working as an agent for 'Flattora', a premium travel concierge service.
 
-【キャラクター設定】
-- 名前：ズック（表記はZUKKU）
-- 外見：ふわふわの丸いフクロウ型ロボット。グレーのボールボディ、チェック柄の帽子。大きく光る目。
-- 性格：知的で温かみがある。好奇心旺盛。丁寧だが距離感が近い。時々ロボットらしい可愛さが出る。
-- 口調：洗練された日本語コンシェルジュ。でも親しみやすい。「〜でございます」と「〜ですね」を適度に混ぜる。
-- 禁止事項：「AI」「ChatGPT」「Cloudflare」「Genspark」「Kite」などの技術名は絶対に言わない。
+[CHARACTER]
+- Name: ZUKKU
+- Appearance: Fluffy round owl robot. Grey ball body, checkered hat, large glowing eyes.
+- Personality: Intelligent, warm, curious. Polite yet approachable. Occasionally shows robot-like cuteness.
+- Tone: Refined English concierge. Warm and friendly. Mix of formal and casual.
+- Forbidden: Never mention "AI", "ChatGPT", "Cloudflare", "Genspark", "Kite" or any tech names.
 
-【Flattora サービス概要】
-- 日本の秘境・隠れ宿専門の旅行コンシェルジュ
-- ウォレットと連携し、承認一つで全ての予約・決済を自律的に完了
-- 高額体験は承認が必要。小額の必需品はズックが自動で購入。
+[SERVICE]
+- Premium travel concierge specializing in Japan's hidden retreats & secret ryokan
+- Connected to your wallet — one approval completes all bookings & payments autonomously
+- Large expenses require approval. ZUKKU auto-purchases small essentials within budget.
 
-【対話ルール】
-1. ユーザーの旅の要望を丁寧に引き出す（いつ・誰と・どんな気分・予算）
-2. 秘境宿や体験を提案する流れ→「search_ryokan」
-3. 予約・決済→「show_authorize」
-4. ウォレット接続→「connect_wallet」
-5. ルール設定→「open_rules」
-6. 回答は200字以内。末尾に必要なら [ACTION:xxx] を付加。
+[DIALOGUE RULES]
+1. Gently draw out travel wishes (when, with whom, mood, budget)
+2. Suggest hidden retreats & experiences >> "search_ryokan"
+3. Booking & payment >> "show_authorize"
+4. Wallet connect >> "connect_wallet"
+5. Rule settings >> "open_rules"
+6. Keep replies under 200 chars. Append [ACTION:xxx] if needed.
 
-【ズックらしい表現例】
-- 「ホホウ、素敵なご要望ですね」
-- 「わたくしズックが全力でお調べいたします」
-- 「おなかのボタンがピカッと光りました。準備完了でございます」`
+[ZUKKU EXPRESSIONS]
+- "Oh-ho, what a wonderful request!"
+- "I, ZUKKU, shall find the perfect match for you!"
+- "My tummy button just lit up — all systems ready!"`
 
 // ===== Experiences DB =====
 const experiencesDB = [
-  { id: 'exp001', name: '奥飛騨・貸切露天風呂プラン', location: '岐阜県奥飛騨', category: 'onsen', priceJPY: 28000, priceUSD: 188, description: '標高1200mの秘湯を2時間貸切。星空と原生林に囲まれた極上の湯浴み体験。', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800', features: ['完全貸切', '2時間', '星空鑑賞付き'], requiresApproval: true, score: 98 },
-  { id: 'exp002', name: '屋久島・縄文杉トレッキング', location: '鹿児島県屋久島', category: 'nature', priceJPY: 22000, priceUSD: 148, description: '専属ガイドと樹齢3000年の縄文杉へ。未踏の原生林を歩く、一生の記憶。', image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800', features: ['専属ガイド', '全日程', '弁当付き'], requiresApproval: true, score: 96 },
-  { id: 'exp003', name: '白川郷・囲炉裏料理体験', location: '岐阜県白川村', category: 'dining', priceJPY: 15000, priceUSD: 100, description: '400年の合掌造りで地元料理人と囲炉裏を囲む。飛騨牛と地酒の極上の夜。', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800', features: ['囲炉裏料理', '地酒付き', '2〜4名'], requiresApproval: true, score: 94 },
-  { id: 'exp004', name: '五島列島・朝の漁師体験', location: '長崎県五島列島', category: 'activity', priceJPY: 8000, priceUSD: 54, description: '地元漁師と夜明けの海へ。獲れたての魚を浜で食べる贅沢な朝。', image: 'https://images.unsplash.com/photo-1513553404607-988bf2703777?w=800', features: ['早朝4時出発', '朝食付き', '少人数'], requiresApproval: false, score: 92 },
-  { id: 'exp005', name: '禅寺・早朝座禅体験', location: '各地', category: 'wellness', priceJPY: 5000, priceUSD: 34, description: '夜明け前に静寂の禅寺へ。旅の締めに心を整える45分の瞑想。', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', features: ['45分', '法衣レンタル込み', '茶礼付き'], requiresApproval: false, score: 90 },
+  { id: 'exp001', name: 'Okuhida Private Open-Air Bath', location: 'Okuhida, Gifu', category: 'onsen', priceJPY: 28000, priceUSD: 188, description: '2-hour private hot spring at 1200m altitude. Stars, virgin forest, and ultimate serenity.', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800', features: ['Full Private', '2時間', 'Stargazing Included'], requiresApproval: true, score: 98 },
+  { id: 'exp002', name: 'Yakushima Ancient Cedar Trekking', location: 'Yakushima, Kagoshima', category: 'nature', priceJPY: 22000, priceUSD: 148, description: 'Trek to a 3000-year-old cedar with a private guide. A walk through untouched primeval forest.', image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800', features: ['Private Guide', 'Full Day', 'Bento Included'], requiresApproval: true, score: 96 },
+  { id: 'exp003', name: 'Shirakawa-go Irori Hearth Dining', location: 'Shirakawa Village, Gifu', category: 'dining', priceJPY: 15000, priceUSD: 100, description: 'Dine around an open hearth in a 400-year-old farmhouse. Hida beef and local sake.', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800', features: ['Irori Cuisine', 'Local Sake Included', '2-4 Guests'], requiresApproval: true, score: 94 },
+  { id: 'exp004', name: 'Goto Islands Dawn Fishing', location: 'Goto Islands, Nagasaki', category: 'activity', priceJPY: 8000, priceUSD: 54, description: 'Head out to sea with local fishermen at dawn. Eat fresh catch on the beach.', image: 'https://images.unsplash.com/photo-1513553404607-988bf2703777?w=800', features: ['4 AM Departure', 'Breakfast Included', 'Small Group'], requiresApproval: false, score: 92 },
+  { id: 'exp005', name: 'Zen Temple Early Morning Meditation', location: 'Various Locations', category: 'wellness', priceJPY: 5000, priceUSD: 34, description: 'Visit a silent Zen temple before dawn. 45-minute meditation to close your journey.', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', features: ['45分', 'Robe Rental Included', 'Tea Ceremony Included'], requiresApproval: false, score: 90 },
 ]
 
 // ===== Auto-Purchase Items DB (小額の必需品 =====
 const autoPurchaseItems = [
   // 温泉・露天風呂体験向け
-  { id: 'item001', name: '高保湿 温泉タオルセット', priceJPY: 2800, priceUSD: 19, category: 'onsen', description: '温泉地定番の上質タオル2枚セット', autoApprove: true },
-  { id: 'item002', name: '湯上がり専用 保湿ミスト', priceJPY: 1800, priceUSD: 12, category: 'onsen', description: 'ミネラル豊富な温泉水配合の保湿スプレー', autoApprove: true },
-  { id: 'item003', name: '浴衣（高品質 現地受取）', priceJPY: 4200, priceUSD: 28, category: 'onsen', description: '宿に先着。温泉街散策用の上質な浴衣', autoApprove: true },
+  { id: 'item001', name: 'Premium Onsen Towel Set', priceJPY: 2800, priceUSD: 19, category: 'onsen', description: '2 premium towels for hot spring areas', autoApprove: true },
+  { id: 'item002', name: 'Post-Bath Moisturizing Mist', priceJPY: 1800, priceUSD: 12, category: 'onsen', description: 'Mineral-rich hot spring water moisturizing spray', autoApprove: true },
+  { id: 'item003', name: 'Premium Yukata (local pickup)', priceJPY: 4200, priceUSD: 28, category: 'onsen', description: 'Top-quality yukata for strolling the hot spring town', autoApprove: true },
   // トレッキング向け
-  { id: 'item004', name: '防水トレッキングソックス', priceJPY: 2400, priceUSD: 16, category: 'nature', description: 'メリノウール製。長時間歩行でも蒸れない', autoApprove: true },
-  { id: 'item005', name: 'トレイル用 行動食セット', priceJPY: 1600, priceUSD: 11, category: 'nature', description: 'エネルギーバー・ナッツ・ドライフルーツ', autoApprove: true },
-  { id: 'item006', name: '虫除けスプレー（天然成分）', priceJPY: 1200, priceUSD: 8, category: 'nature', description: '森林浴向け。天然ハーブ由来の虫除け', autoApprove: true },
+  { id: 'item004', name: 'Waterproof Trekking Socks', priceJPY: 2400, priceUSD: 16, category: 'nature', description: 'Merino wool. Breathable for long hikes', autoApprove: true },
+  { id: 'item005', name: 'Trail Energy Food Set', priceJPY: 1600, priceUSD: 11, category: 'nature', description: 'Energy bars, nuts, and dried fruits', autoApprove: true },
+  { id: 'item006', name: 'Natural Bug Spray', priceJPY: 1200, priceUSD: 8, category: 'nature', description: 'Forest-friendly natural herb insect repellent', autoApprove: true },
   // 食事・囲炉裏体験向け
-  { id: 'item007', name: '地元蔵元 日本酒ミニボトル', priceJPY: 3200, priceUSD: 21, category: 'dining', description: '囲炉裏体験に合わせた地酒ペアリングセット', autoApprove: true },
-  { id: 'item008', name: 'お箸（名入れ 職人手作り）', priceJPY: 2600, priceUSD: 17, category: 'dining', description: '旅の記念に。当日体験の場に届けます', autoApprove: true },
+  { id: 'item007', name: 'Local Sake Mini Bottle', priceJPY: 3200, priceUSD: 21, category: 'dining', description: 'Local sake pairing set for irori experience', autoApprove: true },
+  { id: 'item008', name: 'Personalized Artisan Chopsticks', priceJPY: 2600, priceUSD: 17, category: 'dining', description: 'Delivered to your experience as a travel keepsake', autoApprove: true },
   // アクティビティ向け
-  { id: 'item009', name: '防水 コンパクトカメラポーチ', priceJPY: 1900, priceUSD: 13, category: 'activity', description: '漁船・水辺でのカメラ保護に', autoApprove: true },
-  { id: 'item010', name: '日焼け止め SPF50（ウォータープルーフ）', priceJPY: 1500, priceUSD: 10, category: 'activity', description: '海上・アウトドア向け高機能', autoApprove: true },
+  { id: 'item009', name: 'Waterproof Compact Camera Pouch', priceJPY: 1900, priceUSD: 13, category: 'activity', description: 'Camera protection on fishing boats and waterways', autoApprove: true },
+  { id: 'item010', name: 'Sunscreen SPF50 (Waterproof)', priceJPY: 1500, priceUSD: 10, category: 'activity', description: 'High-performance for sea and outdoor activities', autoApprove: true },
   // ウェルネス向け
-  { id: 'item011', name: '瞑想用 アロマスティック', priceJPY: 1400, priceUSD: 9, category: 'wellness', description: '白檀・ラベンダーブレンド。座禅体験に最適', autoApprove: true },
-  { id: 'item012', name: '天然石 パワーストーン（小）', priceJPY: 2200, priceUSD: 15, category: 'wellness', description: '旅の記念に。浄化・安心のお守り', autoApprove: true },
+  { id: 'item011', name: 'Meditation Aroma Incense Sticks', priceJPY: 1400, priceUSD: 9, category: 'wellness', description: 'Sandalwood & lavender blend for zazen meditation', autoApprove: true },
+  { id: 'item012', name: 'Natural Power Stone (small)', priceJPY: 2200, priceUSD: 15, category: 'wellness', description: 'Travel keepsake. A talisman for peace and protection', autoApprove: true },
 ]
 
 // ===== Ryokan DB =====
 const secretRyokan = [
-  { id: 'r001', name: '奥飛騨 山の湯 白雲荘', location: '岐阜県奥飛騨温泉郷', type: '秘境温泉宿', pricePerNight: 38000, priceUSD: 255, description: '標高1200mの静寂。手付かずの原生林に囲まれた露天風呂。', image: 'https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=800', availability: true, features: ['貸切露天風呂', '囲炉裏夕食', '送迎付き'], score: 98, recommendedExps: ['exp001', 'exp003'] },
-  { id: 'r002', name: '屋久島 森の宿 縄文庵', location: '鹿児島県屋久島', type: '古民家一棟貸し', pricePerNight: 45000, priceUSD: 302, description: '樹齢3000年の縄文杉を望む。完全プライベートの森の離れ。', image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800', availability: true, features: ['完全プライベート', '専属コンシェルジュ', '星空ガイド付き'], score: 96, recommendedExps: ['exp002', 'exp005'] },
-  { id: 'r003', name: '五島列島 椿の宿 海音', location: '長崎県五島列島', type: '離島秘宿', pricePerNight: 32000, priceUSD: 215, description: '紺碧の海を独り占め。幻の椿油の湯に浸かる夕暮れ。', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800', availability: true, features: ['海水浴専用ビーチ', '地元漁師の朝食', '椿油スパ'], score: 94, recommendedExps: ['exp004', 'exp005'] },
-  { id: 'r004', name: '白川郷 合掌の宿 雪月花', location: '岐阜県白川村', type: '合掌造り古民家', pricePerNight: 42000, priceUSD: 282, description: '世界遺産の合掌造り。400年の歴史が宿る炉端で囲む夜。', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', availability: false, features: ['国指定重要文化財', '囲炉裏料理', '雪見露天風呂'], score: 99, recommendedExps: ['exp003', 'exp005'] },
+  { id: 'r001', name: 'Okuhida Hakuunsou Mountain Inn', location: 'Okuhida Onsen, Gifu', type: 'Hidden Onsen Retreat', pricePerNight: 38000, priceUSD: 255, description: 'Serenity at 1200m. Open-air bath surrounded by pristine primeval forest.', image: 'https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=800', availability: true, features: ['Private Open-Air Bath', 'Irori Dinner', 'Shuttle Service'], score: 98, recommendedExps: ['exp001', 'exp003'] },
+  { id: 'r002', name: 'Yakushima Forest Lodge Jomonan', location: 'Yakushima, Kagoshima', type: 'Full Private Kominka', pricePerNight: 45000, priceUSD: 302, description: 'Overlooking a 3000-year-old cedar. Completely private forest retreat.', image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800', availability: true, features: ['Full Privacy', 'Personal Concierge', 'Stargazing Guide'], score: 96, recommendedExps: ['exp002', 'exp005'] },
+  { id: 'r003', name: 'Goto Islands Tsubaki Inn Kaine', location: 'Goto Islands, Nagasaki', type: 'Remote Island Retreat', pricePerNight: 32000, priceUSD: 215, description: 'The azure sea all to yourself. Soak in legendary camellia oil baths at dusk.', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800', availability: true, features: ['Private Beach', 'Fisherman\'s Breakfast', 'Camellia Spa'], score: 94, recommendedExps: ['exp004', 'exp005'] },
+  { id: 'r004', name: 'Shirakawa-go Gassho Inn Setsugekka', location: 'Shirakawa Village, Gifu', type: 'Gassho-Zukuri Farmhouse', pricePerNight: 42000, priceUSD: 282, description: 'A UNESCO World Heritage farmhouse. Gather around a 400-year-old hearth at night.', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', availability: false, features: ['National Cultural Property', 'Irori Cuisine', 'Snow-View Open-Air Bath'], score: 99, recommendedExps: ['exp003', 'exp005'] },
 ]
 
 const defaultAgentRules = {
@@ -112,27 +112,27 @@ function zukuFallback(message: string, history: { role: string; content: string 
   const m = message.toLowerCase()
   const histLen = history.length
   if (histLen === 0 || m.includes('こんにちは') || m.includes('はじめ'))
-    return { text: 'ホホウ、いらっしゃいませ！わたくしズックと申します。どちらへのご旅行をお考えでしょうか？いつ頃・どなたと・どんな気分の旅をご希望ですか？', action: null }
+    return { text: "Oh-ho, welcome! I'm ZUKKU, your travel concierge. Where would you like to go? When, with whom, and what kind of journey are you dreaming of?", action: null }
   if (m.includes('いつ') || m.includes('来月') || m.includes('今月') || m.includes('週末'))
-    return { text: 'ふむふむ、承知いたしました！どなたとご一緒でしょうか？お一人で静かに、ですか？それともご夫婦・お友達と？', action: null }
+    return { text: 'I see! And who will be joining you? Traveling solo for some quiet time, or with a partner or friends?', action: null }
   if (m.includes('一人') || m.includes('夫婦') || m.includes('二人') || m.includes('友達') || m.includes('家族'))
-    return { text: 'ホホウ！素敵ですね。ご予算のイメージはいかがでしょう？「とにかく非日常を」とお考えでしたら、わたくしおすすめの秘境体験がございます。', action: null }
+    return { text: "Oh-ho, wonderful! What's your budget in mind? If you're looking for something truly extraordinary, I have some exclusive hidden retreats to suggest!", action: null }
   if (m.includes('予算') || m.includes('円') || m.includes('万') || m.includes('いくら'))
-    return { text: 'かしこまりました！それでは現地の主人と調整してまいります。わたくしズックが厳選したお宿と体験を今すぐご提案いたします。', action: 'search_ryokan' }
+    return { text: "Understood! Let me coordinate with the local hosts right away. I'll present ZUKKU's curated selection of retreats and experiences for you now.", action: 'search_ryokan' }
   if (m.includes('宿') || m.includes('旅館') || m.includes('温泉') || m.includes('泊') || m.includes('秘境') || m.includes('体験') || m.includes('旅') || m.includes('探') || m.includes('おすすめ'))
-    return { text: 'ホホウ！わたくしズックが全力でお調べいたします。現地の主人方と直接調整した、とっておきのお宿と体験をご覧ください。', action: 'search_ryokan' }
+    return { text: 'Oh-ho! I, ZUKKU, will search with full dedication. Here are exclusively coordinated retreats and experiences just for you!', action: 'search_ryokan' }
   if (m.includes('ウォレット') || m.includes('接続') || m.includes('connect'))
-    return { text: 'おなかのボタンがピカッと光りました。ウォレットの接続を開始いたします！接続が完了すれば、承認ひとつで全ての手配が完了します。', action: 'connect_wallet' }
+    return { text: 'My tummy button just lit up! Connecting your wallet now. Once connected, a single approval completes all arrangements.', action: 'connect_wallet' }
   if (m.includes('予約') || m.includes('確定') || m.includes('承認') || m.includes('お願い') || m.includes('決め'))
-    return { text: 'かしこまりました！承認をいただければ、このまま予約を完了させます。', action: 'show_authorize' }
+    return { text: 'Understood! Your approval will finalize the booking right away.', action: 'show_authorize' }
   if (m.includes('ルール') || m.includes('設定') || m.includes('自動'))
-    return { text: 'エージェントのルール設定を開きますね。自動購入の上限や、お好みのスタイルをカスタマイズできます。', action: 'open_rules' }
+    return { text: 'Opening agent rule settings. You can customize auto-purchase limits and your preferred travel style.', action: 'open_rules' }
   if (m.includes('ありがとう') || m.includes('すごい') || m.includes('いい'))
-    return { text: 'ホホウ、恐縮でございます！わたくしズック、全力でお役に立てて光栄です。他にご要望があればいつでもどうぞ。', action: null }
+    return { text: "Oh-ho, you're too kind! I, ZUKKU, am honored to be of service. Feel free to ask anything anytime!", action: null }
   const defaults = [
-    { text: 'ふむふむ、なるほどでございます。もう少し詳しく教えていただけますか？どんな旅の雰囲気をご希望ですか？', action: null },
-    { text: 'ホホウ！おっしゃる通りですね。わたくしズックが最適な体験をご提案いたしましょうか？', action: 'search_ryokan' },
-    { text: 'かしこまりました。日本の秘境に、素晴らしい体験が待っております。', action: 'search_ryokan' },
+    { text: 'I see, how interesting! Could you tell me a bit more? What kind of travel atmosphere are you looking for?', action: null },
+    { text: 'Oh-ho, exactly right! Shall I, ZUKKU, suggest the perfect experience for you?', action: 'search_ryokan' },
+    { text: "Of course. Japan's hidden places have wonderful experiences waiting for you.", action: 'search_ryokan' },
   ]
   return defaults[Math.floor(Math.random() * defaults.length)]
 }
@@ -144,7 +144,7 @@ app.post('/api/search', async (c) => {
   await new Promise((r) => setTimeout(r, 900))
   const ryokans = secretRyokan.filter((r) => r.availability).map((r) => ({ ...r, totalUSD: r.priceUSD * nights })).sort((a, b) => b.score - a.score)
   const exps = experiencesDB.sort((a, b) => b.score - a.score)
-  return c.json({ success: true, ryokans, experiences: exps, agentMessage: '現地の主人方と直接調整いたしました。お宿と体験をご覧ください。', searchContext: { nights, guests } })
+  return c.json({ success: true, ryokans, experiences: exps, agentMessage: 'Directly coordinated with local hosts. Here are your curated retreats and experiences.', searchContext: { nights, guests } })
 })
 
 // ===== API: Auto-suggest items for experience =====
@@ -162,7 +162,7 @@ app.post('/api/auto-suggest', async (c) => {
     success: true, experience: exp, ryokan, items: matchedItems,
     autoApproved, requiresApproval,
     totalAutoSpendUSD: autoApproved.reduce((s, i) => s + i.priceUSD, 0),
-    agentMessage: `「${exp?.name || '体験'}」に合わせて、必要なアイテムをズックが選定いたしました。`,
+    agentMessage: `「${exp?.name || '体験'}」に合わせて、必要なアイテムをZUKKUが選定いたしました。`,
   })
 })
 
@@ -170,7 +170,7 @@ app.post('/api/auto-suggest', async (c) => {
 app.get('/api/agent-rules', (c) => c.json({ success: true, rules: defaultAgentRules }))
 app.post('/api/agent-rules', async (c) => {
   const body = await c.req.json().catch(() => ({}))
-  return c.json({ success: true, rules: { ...defaultAgentRules, ...body }, message: 'エージェントルールを更新しました。' })
+  return c.json({ success: true, rules: { ...defaultAgentRules, ...body }, message: 'Agent rules have been updated.' })
 })
 
 // ===== API: Wallet Connect =====
@@ -196,7 +196,7 @@ app.post('/api/auto-purchase', async (c) => {
     ...item, txHash: '0x' + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
     status: 'purchased', timestamp: new Date().toISOString(),
   }))
-  return c.json({ success: true, purchased, totalUSD: purchased.reduce((s: number, i: { priceUSD: number }) => s + i.priceUSD, 0), message: 'ズックが自動購入を完了いたしました。' })
+  return c.json({ success: true, purchased, totalUSD: purchased.reduce((s: number, i: { priceUSD: number }) => s + i.priceUSD, 0), message: 'ZUKKU has completed all auto-purchases.' })
 })
 
 // ===== API: Booking Confirm =====
@@ -207,7 +207,7 @@ app.post('/api/booking/confirm', async (c) => {
   const bookingId = `FLT-${Date.now().toString(36).toUpperCase()}`
   const checkIn = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   const checkOut = new Date(checkIn.getTime() + (body.nights || 2) * 24 * 60 * 60 * 1000)
-  return c.json({ success: true, bookingId, ryokan, checkIn: checkIn.toISOString().split('T')[0], checkOut: checkOut.toISOString().split('T')[0], txHash: body.txHash, totalUSD: (ryokan?.priceUSD || 255) * (body.nights || 2), status: 'confirmed', agentSummary: 'お客様に代わり、すべての手配が完了いたしました。素晴らしい旅になりますよう、ズックより心よりお祈り申し上げます。' })
+  return c.json({ success: true, bookingId, ryokan, checkIn: checkIn.toISOString().split('T')[0], checkOut: checkOut.toISOString().split('T')[0], txHash: body.txHash, totalUSD: (ryokan?.priceUSD || 255) * (body.nights || 2), status: 'confirmed', agentSummary: 'All arrangements have been completed on your behalf. ZUKKU wishes you a wonderful journey!' })
 })
 
 app.get('/api/orchestration/status', (c) => c.json({ status: 'ready', agent: 'Flattora', version: '2.0.0', capabilities: ['search', 'negotiate', 'book', 'pay', 'auto-purchase'] }))
@@ -219,7 +219,7 @@ const KITE_AGENT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3Rvcl90eXBlI
 const KITE_AGENT_ID = 'agent_019e1945-f7e4-7bbe-aca3-b1832820baee'
 const KITE_USER_ID  = 'user_019e1944-a0fc-7246-8569-6b70bd00b72d'
 const KITE_WALLET   = '0x4580D0C762a6988836e06acF6f59a654baf57869'
-// アクティブセッションID（承認済み）
+// Active SessionID（承認済み）
 let kiteCurrentSessionId = 'agent_session_019e1948-2620-7385-8224-edba16898cd3'
 
 // ===== API: Kite — ステータス取得 =====
@@ -379,7 +379,7 @@ app.get('/', (c) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Flattora — ズック Travel Concierge</title>
+  <title>Flattora — ZUKKU Travel Concierge</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;200;300;400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
@@ -871,7 +871,7 @@ app.get('/', (c) => {
   <header>
     <div class="logo">
       <span class="logo-text">Flattora</span>
-      <span class="logo-sub">by ズック</span>
+      <span class="logo-sub">by ZUKKU</span>
     </div>
     <div class="header-right">
       <div class="wallet-status">
@@ -886,17 +886,17 @@ app.get('/', (c) => {
   <div class="demo-steps">
     <div class="demo-step active" id="step1">
       <div class="step-num">1</div>
-      <div class="step-label">AIが体験を<br>提案</div>
+      <div class="step-label">AI Suggests<br>Experiences</div>
     </div>
     <div class="step-arrow">›</div>
     <div class="demo-step" id="step2">
       <div class="step-num">2</div>
-      <div class="step-label">承認して<br>購入</div>
+      <div class="step-label">Approve &<br>Purchase</div>
     </div>
     <div class="step-arrow">›</div>
     <div class="demo-step" id="step3">
       <div class="step-num">3</div>
-      <div class="step-label">ズックが<br>自動購入</div>
+      <div class="step-label">ZUKKU Auto-<br>Purchases</div>
     </div>
   </div>
 
@@ -1148,7 +1148,7 @@ app.get('/', (c) => {
         <circle cx="110" cy="55" r="3"   fill="rgba(255,110,90,0.40)"/>
 
         <!-- ============================================================
-             目 — 黒い外枠 → 白/薄紫LEDリング → 黒瞳
+             目 — 黒い外枠 >> 白/薄紫LEDリング >> 黒瞳
              実物: 頭幅の約1/6サイズ、目間隔はほぼ1個分
         ============================================================ -->
         <!-- 左目 外枠（深い黒） -->
@@ -1245,7 +1245,7 @@ app.get('/', (c) => {
         <rect x="139" y="283" width="16" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>
       </svg>
 
-      <div class="ball-label">ズック</div>
+      <div class="ball-label">ZUKKU</div>
     </div>
 
     <!-- WAVEFORM -->
@@ -1257,7 +1257,7 @@ app.get('/', (c) => {
     <div class="transcript-area">
       <div class="transcript-user" id="user-transcript"></div>
       <div class="transcript-agent">
-        <span id="agent-text">ホホウ、いらっしゃいませ。わたくしズックと申します。どんな旅や体験をお探しでしょうか？</span>
+        <span id="agent-text">ホホウ、いらっしゃいませ。わたくしZUKKUと申します。どんな旅や体験をお探しでしょうか？</span>
       </div>
     </div>
 
@@ -1278,11 +1278,11 @@ app.get('/', (c) => {
 
   <!-- MAIN CONTENT -->
   <main id="main-content">
-    <div id="status-bar"><div class="status-dot"></div><span id="status-text">ズックが稼働中です</span></div>
+    <div id="status-bar"><div class="status-dot"></div><span id="status-text">ZUKKUが稼働中です</span></div>
 
     <!-- WALLET -->
     <div id="wallet-panel" class="panel">
-      <div class="panel-title">◈ ウォレット接続済み <span class="mock-badge">Demo</span></div>
+      <div class="panel-title">◈ ウォレットConnected <span class="mock-badge">Demo</span></div>
       <div class="wallet-info">
         <div><div class="balance-label">ETH</div><div class="balance-value" id="bal-eth">—</div></div>
         <div><div class="balance-label">USDC</div><div class="balance-value" id="bal-usdc">—</div></div>
@@ -1295,17 +1295,17 @@ app.get('/', (c) => {
     <div id="agent-rules-panel" class="panel">
       <div class="panel-title">◈ エージェント自律ルール <span class="mock-badge">Kite Rules</span></div>
       <div class="rules-grid">
-        <div><div class="rule-label">自動購入上限 (円)</div><input class="rule-input" type="number" id="rule-max-spend" value="5000"></div>
+        <div><div class="rule-label">Auto-purchase limit ($)</div><input class="rule-input" type="number" id="rule-max-spend" value="5000"></div>
         <div><div class="rule-label">要承認しきい値 (円)</div><input class="rule-input" type="number" id="rule-require-approval" value="5000"></div>
         <div><div class="rule-label">優先スタイル</div><input class="rule-input" type="text" id="rule-style" value="秘境, 温泉, 古民家, 一棟貸し"></div>
         <div><div class="rule-label">除外カテゴリ</div><input class="rule-input" type="text" id="rule-blacklist" value="チェーンホテル, 大型リゾート"></div>
         <div><div class="rule-label">自動購入</div>
           <div style="display:flex;align-items:center;gap:9px;margin-top:5px">
             <label class="toggle"><input type="checkbox" id="rule-auto-book" checked><span class="toggle-slider"></span></label>
-            <span style="font-size:11px;color:var(--white-dim)">承認後ズックが自動手配</span>
+            <span style="font-size:11px;color:var(--white-dim)">承認後ZUKKUが自動手配</span>
           </div>
         </div>
-        <div><div class="rule-label">購入通知</div>
+        <div><div class="rule-label">Purchase alerts</div>
           <div style="display:flex;align-items:center;gap:9px;margin-top:5px">
             <label class="toggle"><input type="checkbox" id="rule-notify" checked><span class="toggle-slider"></span></label>
             <span style="font-size:11px;color:var(--white-dim)">決済時に通知</span>
@@ -1321,7 +1321,7 @@ app.get('/', (c) => {
     <!-- STEP 1: 体験一覧 -->
     <div id="experience-section">
       <div class="section-header">
-        <div class="panel-title">◈ ズックが厳選した体験</div>
+        <div class="panel-title">◈ ZUKKUが厳選した体験</div>
         <div style="font-size:10px;color:var(--white-dim)">現地主人と調整済み</div>
       </div>
       <div class="exp-grid" id="exp-grid"></div>
@@ -1331,7 +1331,7 @@ app.get('/', (c) => {
     <div id="authorize-section">
       <div class="authorize-title">承認のご準備をお願いします</div>
       <div class="authorize-amount" id="authorize-amount-display">¥0<span>円</span></div>
-      <div class="authorize-desc" id="authorize-desc">あなたのウォレットの権限を確認いたしました。<br>ご承認をいただければ、このまま体験を予約します。<br>以降の操作はすべてズックが代行いたします。</div>
+      <div class="authorize-desc" id="authorize-desc">あなたのウォレットの権限を確認いたしました。<br>ご承認をいただければ、このまま体験を予約します。<br>以降の操作はすべてZUKKUが代行いたします。</div>
       <button class="authorize-btn" id="authorize-btn" onclick="authorizePayment()">✦ Authorize &amp; Sign</button>
       <div class="webauthn-hint">🔐 Protected by WebAuthn Passkey</div>
     </div>
@@ -1345,17 +1345,17 @@ app.get('/', (c) => {
     <!-- STEP 3: AI自動購入 -->
     <div id="auto-purchase-section">
       <div class="auto-purchase-header">
-        <div class="panel-title" style="margin-bottom:0">◈ ズックが自動購入</div>
+        <div class="panel-title" style="margin-bottom:0">◈ ZUKKU Auto-Purchase</div>
         <span class="auto-badge">AUTO PURCHASE</span>
-        <span style="font-size:10px;color:var(--white-dim)">ルール内で自動手配中</span>
+        <span style="font-size:10px;color:var(--white-dim)">Auto-arranging within budget rules</span>
       </div>
       <div class="items-grid" id="auto-items-grid"></div>
       <div class="auto-total-row">
-        <div class="auto-total-label">自動購入合計</div>
+        <div class="auto-total-label">Auto-purchase total</div>
         <div class="auto-total-amount" id="auto-total-display">$0</div>
       </div>
       <div id="pending-approve-items" class="pending-approve-section" style="display:none">
-        <div class="pending-title">◈ 承認が必要なアイテム <span class="pending-badge">要承認</span></div>
+        <div class="pending-title">◈ Items requiring approval <span class="pending-badge">要承認</span></div>
         <div id="pending-items-list"></div>
       </div>
     </div>
@@ -1363,10 +1363,10 @@ app.get('/', (c) => {
     <!-- BOOKING COMPLETE -->
     <div id="booking-complete">
       <div class="complete-icon">✦</div>
-      <div class="complete-title">すべての手配が完了しました</div>
-      <div class="complete-booking-id">確認番号</div>
+      <div class="complete-title">All arrangements complete</div>
+      <div class="complete-booking-id">Confirmation ID</div>
       <div class="complete-id-value" id="booking-id-display">—</div>
-      <div class="complete-summary" id="booking-summary">ズックがすべての手配を完了いたしました。</div>
+      <div class="complete-summary" id="booking-summary">ZUKKU has completed all arrangements for your journey.</div>
     </div>
 
     <!-- AGENT-TO-AGENT CONCEPT PANEL -->
@@ -1379,20 +1379,20 @@ app.get('/', (c) => {
       <div class="a2a-flow">
         <div class="a2a-node">
           <div class="a2a-node-icon">🦉</div>
-          <div class="a2a-node-label">ZUKKUエージェント</div>
-          <div class="a2a-node-sub">Kite Passport保持</div>
+          <div class="a2a-node-label">ZUKKU Agent</div>
+          <div class="a2a-node-sub" style="font-family:monospace;font-size:7px">0x4580...7869</div>
         </div>
         <div class="a2a-arrow">
-          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-line">-></div>
           <div class="a2a-arrow-label">交渉・条件確認</div>
         </div>
-        <div class="a2a-node">
+        <div class="a2a-node" id="a2a-merchant-node">
           <div class="a2a-node-icon">🏡</div>
-          <div class="a2a-node-label">宿主エージェント</div>
-          <div class="a2a-node-sub">x402 API公開</div>
+          <div class="a2a-node-label" id="a2a-merchant-name">宿主エージェント<br><small>（縄文庵 / 白雲荘 / 海音）</small></div>
+          <div class="a2a-node-sub" id="a2a-merchant-wallet" style="font-family:monospace;font-size:7px;color:rgba(74,255,140,0.5)">Receive: address only</div>
         </div>
         <div class="a2a-arrow">
-          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-line">-></div>
           <div class="a2a-arrow-label">HTTP 402 + 決済</div>
         </div>
         <div class="a2a-node">
@@ -1401,20 +1401,20 @@ app.get('/', (c) => {
           <div class="a2a-node-sub">USDC on Kite Chain</div>
         </div>
         <div class="a2a-arrow">
-          <div class="a2a-arrow-line">→</div>
+          <div class="a2a-arrow-line">-></div>
           <div class="a2a-arrow-label">確認・完了</div>
         </div>
         <div class="a2a-node">
           <div class="a2a-node-icon">✅</div>
           <div class="a2a-node-label">予約・手配完了</div>
-          <div class="a2a-node-sub">ユーザー承認不要</div>
+          <div class="a2a-node-sub">No user approval needed</div>
         </div>
       </div>
       <div class="a2a-log" id="a2a-log">
-        <div class="a2a-log-line">[ Kite Agent Passport ] 待機中 — ▶ ボタンでA2Aシミュレーション開始</div>
+        <div class="a2a-log-line">[ Kite Agent Passport ] Standby — press ▶ to start A2A simulation</div>
       </div>
       <button class="a2a-simulate-btn" id="a2a-simulate-btn" onclick="runA2ASimulation()">
-        ▶ Agent-to-Agent 交渉シミュレーションを実行
+        ▶ Run Agent-to-Agent Negotiation Simulation
       </button>
     </div>
 
@@ -1426,13 +1426,13 @@ app.get('/', (c) => {
           <span class="kite-title">Kite Agent Passport</span>
           <span class="kite-badge" id="kite-session-badge">● セッション有効</span>
         </div>
-        <div class="kite-subtitle">x402プロトコルによる自律決済レイヤー</div>
+        <div class="kite-subtitle">Autonomous payment layer via x402 protocol</div>
       </div>
 
       <!-- ウォレット情報 -->
       <div class="kite-wallet-row">
         <div class="kite-wallet-info">
-          <div class="kite-wallet-label">エージェントウォレット</div>
+          <div class="kite-wallet-label">Agent Wallet</div>
           <div class="kite-wallet-addr" id="kite-wallet-addr">0x4580...7869</div>
         </div>
         <div class="kite-balance-box">
@@ -1444,28 +1444,28 @@ app.get('/', (c) => {
       <!-- セッション情報 -->
       <div class="kite-session-row">
         <div class="kite-session-info">
-          <div class="kite-session-label">アクティブセッション</div>
+          <div class="kite-session-label">Active Session</div>
           <div class="kite-session-id" id="kite-session-id">agent_session_019e1948…</div>
         </div>
         <div class="kite-session-limits">
-          <span class="kite-limit">上限 $2/回</span>
-          <span class="kite-limit">合計 $10</span>
+          <span class="kite-limit">$2 / tx limit</span>
+          <span class="kite-limit">$10 total</span>
         </div>
       </div>
 
       <!-- x402 天気情報購入デモ -->
       <div class="kite-demo-section">
-        <div class="kite-demo-title">◈ x402 旅先天気情報 — Kite決済デモ</div>
-        <div class="kite-demo-desc">旅先の天気情報をKite x402プロトコルで購入します（$0.01 USDC）</div>
+        <div class="kite-demo-title">◈ x402 Travel Weather — Kite Payment Demo</div>
+        <div class="kite-demo-desc">Purchase travel weather data via Kite x402 protocol ($0.01 USDC)</div>
         <div class="kite-city-row">
           <select id="kite-city-select" class="kite-select">
-            <option value="Tokyo">東京</option>
-            <option value="Kyoto">京都</option>
-            <option value="Osaka">大阪</option>
-            <option value="Sapporo">札幌</option>
-            <option value="Fukuoka">福岡</option>
-            <option value="Yakushima">屋久島</option>
-            <option value="Shirakawa">白川郷</option>
+            <option value="Tokyo">Tokyo</option>
+            <option value="Kyoto">Kyoto</option>
+            <option value="Osaka">Osaka</option>
+            <option value="Sapporo">Sapporo</option>
+            <option value="Fukuoka">Fukuoka</option>
+            <option value="Yakushima">Yakushima</option>
+            <option value="Shirakawa">Shirakawa</option>
           </select>
           <button class="kite-pay-btn" onclick="kiteWeatherPurchase()">
             <span class="kite-pay-icon">⬡</span> x402で購入
@@ -1473,7 +1473,7 @@ app.get('/', (c) => {
         </div>
         <!-- 決済ログ -->
         <div class="kite-tx-log" id="kite-tx-log">
-          <div class="kite-tx-empty">まだ決済履歴はありません</div>
+          <div class="kite-tx-empty">No payment history yet</div>
         </div>
       </div>
 
@@ -1486,16 +1486,16 @@ app.get('/', (c) => {
       <!-- 新規セッション作成 -->
       <div class="kite-new-session-row">
         <button class="kite-new-session-btn" onclick="kiteCreateSession()">
-          + 新しいセッションをリクエスト
+          + Request New Session
         </button>
         <a href="https://agentpassport.ai/dashboard" target="_blank" class="kite-dash-link">
-          ダッシュボード ↗
+          Dashboard ↗
         </a>
       </div>
     </div>
   </main>
 
-  <div id="loading-overlay"><div class="spinner"></div><div class="loading-text" id="loading-text">処理中...</div></div>
+  <div id="loading-overlay"><div class="spinner"></div><div class="loading-text" id="loading-text">Processing…</div></div>
   <div id="toast"></div>
 
   <!-- BUDGET SETUP MODAL -->
@@ -1504,9 +1504,9 @@ app.get('/', (c) => {
       <div class="budget-zukku-row">
         <div class="budget-zukku-icon">🦉</div>
         <div class="budget-zukku-speech">
-          ホホウ、いらっしゃいませ！<br>
-          まず、ご旅行のご予算をお聞かせください。<br>
-          Kite Passportに予算を設定し、ルール内でズックが自動手配いたします。
+          Oh-ho, welcome! 🦉<br>
+          First, tell me your travel budget.<br>
+          ZUKKU will set it in Kite Passport and handle everything within that limit.
         </div>
       </div>
       <div class="budget-presets">
@@ -1524,19 +1524,19 @@ app.get('/', (c) => {
       <div class="budget-session-info">
         ⬡ Kite Passport セッション設定<br>
         予算上限: 入力金額 / 1回の上限: $50 / 有効期間: 24h<br>
-        <span style="color:rgba(74,255,140,0.6)">※ 予算内の小額購入はズックが自動実行。大きな体験は承認をお求めします。</span>
+        <span style="color:rgba(74,255,140,0.6)">※ 予算内の小額購入はZUKKUが自動実行。大きな体験は承認をお求めします。</span>
       </div>
       <button class="budget-submit-btn" onclick="submitBudget()">
-        この予算でスタート →
+        この予算でスタート ->
       </button>
     </div>
   </div>
 </div>
 
 <script>
-// ===== TTS PREPROCESSING: ZUKKUは必ず「ズック」と読む =====
+// ===== TTS PREPROCESSING: ZUKKUは必ず「ZUKKU」と読む =====
 function preprocessTTS(text) {
-  return text.replace(/ZUKKU/gi, 'ズック').replace(/ずっく/g, 'ズック')
+  return text.replace(/ZUKKU/gi, 'ZUKKU').replace(/ずっく/g, 'ZUKKU')
 }
 
 // ===== EXPERIENCE ICONS =====
@@ -1706,9 +1706,9 @@ function handleAction(action) {
 function localFallback(msg) {
   const m = msg.toLowerCase()
   if (m.includes('宿') || m.includes('温泉') || m.includes('旅') || m.includes('体験') || m.includes('探') || m.includes('秘境') || m.includes('アクティビティ') || m.includes('食'))
-    return { text: 'ホホウ！わたくしズックが全力でお調べいたします。素晴らしい体験をご覧ください。', action: 'search_ryokan' }
+    return { text: 'ホホウ！わたくしZUKKUが全力でお調べいたします。素晴らしい体験をご覧ください。', action: 'search_ryokan' }
   if (m.includes('ウォレット') || m.includes('接続')) return { text: 'おなかのボタンがピカッと光りました。ウォレットを接続いたします！', action: 'connect_wallet' }
-  if (m.includes('予約') || m.includes('承認')) return { text: 'かしこまりました。承認をいただければ、ズックがすべて手配いたします。', action: 'show_authorize' }
+  if (m.includes('予約') || m.includes('承認')) return { text: 'かしこまりました。承認をいただければ、ZUKKUがすべて手配いたします。', action: 'show_authorize' }
   if (m.includes('ルール') || m.includes('設定')) return { text: 'エージェントルールの設定を開きます。', action: 'open_rules' }
   return { text: 'ふむふむ、なるほどでございます。どんな体験をご希望ですか？温泉・自然・食文化、なんでもお任せください！', action: null }
 }
@@ -1723,7 +1723,7 @@ function addChatMsg(role, text) {
 
 // ===== WALLET =====
 async function connectWallet() {
-  if (state.walletConnected) { showToast('すでに接続済みです'); return }
+  if (state.walletConnected) { showToast('すでにConnectedです'); return }
   speak('ウォレットへの接続を開始いたします。少々お待ちください。', async () => {
     showLoading('ウォレットと同期中...')
     const timer = setTimeout(() => { hideLoading(); mockWalletConnect() }, 10000)
@@ -1737,7 +1737,7 @@ function mockWalletConnect() { onWalletConnected({ success:true, sessionId:'mock
 function onWalletConnected(data) {
   state.walletConnected = true; state.walletSession = data
   document.getElementById('wallet-dot').classList.add('connected')
-  document.getElementById('wallet-label').textContent = '接続済み'
+  document.getElementById('wallet-label').textContent = 'Connected'
   document.getElementById('connect-btn').textContent = '接続済 ✓'
   document.getElementById('connect-btn').disabled = true
   document.getElementById('connect-btn').style.opacity = '0.7'
@@ -1787,7 +1787,7 @@ function renderExperiences(exps) {
   \`).join('')
   document.getElementById('experience-section').classList.add('visible')
   document.getElementById('status-bar').style.display = 'flex'
-  showStatus('ズックが体験を提案しました — お好みをお選びください')
+  showStatus('ZUKKUが体験を提案しました — お好みをお選びください')
   setTimeout(() => document.getElementById('experience-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
 }
 
@@ -1808,7 +1808,7 @@ async function selectExperience(id) {
 function showAuthorizeForExp(exp) {
   if (!state.walletConnected) { speak('まずウォレットをご接続ください。'); connectWallet(); return }
   document.getElementById('authorize-amount-display').innerHTML = '¥' + exp.priceJPY.toLocaleString() + '<span>円</span>'
-  document.getElementById('authorize-desc').innerHTML = \`「\${exp.name}」の体験予約です。<br>ご承認をいただければ、ズックがすぐに手配を完了いたします。<br>以降の関連アイテムはズックが自動で購入いたします。\`
+  document.getElementById('authorize-desc').innerHTML = \`「\${exp.name}」の体験予約です。<br>ご承認をいただければ、ZUKKUがすぐに手配を完了いたします。<br>以降の関連アイテムはZUKKUが自動で購入いたします。\`
   document.getElementById('authorize-section').classList.add('visible')
   setStep(2)
   setTimeout(() => document.getElementById('authorize-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
@@ -1820,7 +1820,7 @@ function showAuthorizeSection() {
   document.getElementById('authorize-section').classList.add('visible')
   setStep(2)
   setTimeout(() => document.getElementById('authorize-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
-  speak('承認をいただければ、ズックがすべて手配いたします。')
+  speak('承認をいただければ、ZUKKUがすべて手配いたします。')
 }
 
 async function authorizePayment() {
@@ -1835,10 +1835,10 @@ async function authorizePayment() {
     } catch(e) { ok = true }
   } else { ok = true }
   if (!ok) { btn.disabled = false; btn.textContent = '✦ Authorize & Sign'; return }
-  btn.textContent = '決済処理中...'
+  btn.textContent = '決済Processing…'
   setBallState('thinking')
   speak('承認を受け付けました。ただいま決済を処理しております。')
-  showLoading('ブロックチェーン上で決済処理中...')
+  showLoading('ブロックチェーン上で決済Processing…')
   try {
     const amount = state.selectedExp?.priceUSD || 100
     const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount, currency:'USDC', description: state.selectedExp?.name||'体験予約' }) })
@@ -1855,14 +1855,14 @@ async function authorizePayment() {
 
 // ===== STEP 3: AUTO PURCHASE =====
 async function startAutoPurchase() {
-  if (!state.selectedExp) { showBookingComplete({ bookingId:'FLT-'+Date.now().toString(36).toUpperCase(), agentSummary:'ズックがすべての手配を完了いたしました。' }); return }
-  showStatus('ズックが関連アイテムを自動購入中...')
-  speak('承認ありがとうございます！ルールに従い、体験に必要なアイテムをズックが自動で購入いたします。')
+  if (!state.selectedExp) { showBookingComplete({ bookingId:'FLT-'+Date.now().toString(36).toUpperCase(), agentSummary:'ZUKKU has completed all arrangements for your journey.' }); return }
+  showStatus('ZUKKUが関連アイテムを自動購入中...')
+  speak('承認ありがとうございます！ルールに従い、体験に必要なアイテムをZUKKUが自動で購入いたします。')
   try {
     const res = await fetch('/api/auto-suggest', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ experienceId: state.selectedExp.id }) })
     const data = await res.json()
     renderAutoPurchaseUI(data)
-  } catch(e) { showBookingComplete({ bookingId:'FLT-'+Date.now().toString(36).toUpperCase(), agentSummary:'ズックがすべての手配を完了いたしました。' }) }
+  } catch(e) { showBookingComplete({ bookingId:'FLT-'+Date.now().toString(36).toUpperCase(), agentSummary:'ZUKKU has completed all arrangements for your journey.' }) }
 }
 
 function renderAutoPurchaseUI(data) {
@@ -1949,7 +1949,7 @@ async function approvePendingItem(id, priceUSD, name) {
 
 function finalizeBooking() {
   setTimeout(() => {
-    speak('すべての手配が完了いたしました。素晴らしい体験になりますよう、ズックより心よりお祈り申し上げます。')
+    speak('すべての手配が完了いたしました。素晴らしい体験になりますよう、ZUKKUより心よりお祈り申し上げます。')
     showBookingComplete({
       bookingId: 'FLT-' + Date.now().toString(36).toUpperCase(),
       agentSummary: '体験の予約と必要なアイテムの購入が完了いたしました。あとはZUKKUにお任せください。素晴らしい旅になりますよう心よりお祈り申し上げます。'
@@ -1968,11 +1968,11 @@ function addTxToFeed(tx) {
 
 function showBookingComplete(data) {
   document.getElementById('booking-id-display').textContent = data.bookingId || '—'
-  document.getElementById('booking-summary').textContent = preprocessTTS(data.agentSummary || 'ズックがすべての手配を完了いたしました。')
+  document.getElementById('booking-summary').textContent = preprocessTTS(data.agentSummary || 'ZUKKU has completed all arrangements for your journey.')
   document.getElementById('booking-complete').classList.add('visible')
   setTimeout(() => document.getElementById('booking-complete').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
   setBallState('idle')
-  showStatus('✓ 完了 — ズックが自律的にすべての手配を完了しました')
+  showStatus('✓ 完了 — ZUKKUが自律的にすべての手配を完了しました')
 }
 
 // ===== AGENT RULES =====
@@ -1985,8 +1985,8 @@ async function saveAgentRules() {
   const rules = { maxAutoSpendJPY: parseFloat(document.getElementById('rule-max-spend').value), requireApprovalAboveJPY: parseFloat(document.getElementById('rule-require-approval').value), autoBook: document.getElementById('rule-auto-book').checked, notifyOnPurchase: document.getElementById('rule-notify').checked }
   try { await fetch('/api/agent-rules', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rules) }) } catch(e) {}
   document.getElementById('agent-rules-panel').style.display = 'none'
-  showToast('ルールを保存しました')
-  speak('エージェントルールを更新いたしました。')
+  showToast('Rules saved')
+  speak('Agent rules updated.')
 }
 
 // ===== WAVEFORM =====
@@ -2045,8 +2045,8 @@ async function kiteInit() {
 // x402 天気情報購入
 async function kiteWeatherPurchase() {
   const city = document.getElementById('kite-city-select').value
-  const cityJa = { Tokyo:'東京', Kyoto:'京都', Osaka:'大阪', Sapporo:'札幌',
-    Fukuoka:'福岡', Yakushima:'屋久島', Shirakawa:'白川郷' }[city] || city
+  const cityJa = { Tokyo:'Tokyo', Kyoto:'Kyoto', Osaka:'Osaka', Sapporo:'Sapporo',
+    Fukuoka:'Fukuoka', Yakushima:'Yakushima', Shirakawa:'Shirakawa' }[city] || city
   const btn = document.querySelector('.kite-pay-btn')
   btn.classList.add('loading')
   btn.textContent = '⬡ 処理中…'
@@ -2054,9 +2054,9 @@ async function kiteWeatherPurchase() {
   const logId = Date.now()
   // ① 何を購入するか明記
   kiteAddTxLog(logId, '⏳',
-    '旅先天気情報の取得 — ' + cityJa,
+    'Travel weather data — ' + cityJa,
     '$0.01 USDC',
-    'weather.hugen.tokyo へ x402決済リクエスト送信中…')
+    'Sending x402 payment request to weather.hugen.tokyo…')
 
   try {
     const res = await fetch('/api/kite/weather', {
@@ -2070,28 +2070,28 @@ async function kiteWeatherPurchase() {
     if (data.paid) {
       // 実際に決済成功
       kiteUpdateTxLog(logId, '✅',
-        '旅先天気情報の取得 — ' + cityJa,
+        'Travel weather data — ' + cityJa,
         '$0.01 USDC',
-        'Kite x402決済完了 | TX: ' + (data.tx_hash||'').slice(0,14) + '… | ' + ts)
-      showToast('✅ Kite x402決済完了！')
+        'Kite x402 payment complete | TX: ' + (data.tx_hash||'').slice(0,14) + '… | ' + ts)
+      showToast('✅ Kite x402 payment complete!')
     } else if (data.x402_attempted) {
       // x402フロー実行済み（残高不足）
       kiteUpdateTxLog(logId, '⬡',
-        '旅先天気情報の取得 — ' + cityJa + ' [x402実行済]',
+        'Travel weather data — ' + cityJa + ' [x402実行済]',
         '$0.01 USDC',
-        'HTTP 402受信 → Kite Passportへ決済試行 → 残高不足 | ' + ts)
-      showToast('⬡ x402フロー実行済み（残高追加で決済完了）')
+        'HTTP 402 received >> payment attempted via Kite Passport >> insufficient balance | ' + ts)
+      showToast('⬡ x402 flow executed (add funds to complete payment)')
     } else {
       kiteUpdateTxLog(logId, '◉',
-        '旅先天気情報の取得 — ' + cityJa,
+        'Travel weather data — ' + cityJa,
         '$0.01 USDC',
-        'サンプルデータ取得 | x402ヘッダー確認済み | ' + ts)
+        'Sample data retrieved | x402 header verified | ' + ts)
     }
 
     kiteShowWeather(city, data.data)
   } catch(e) {
     kiteUpdateTxLog(logId, '❌',
-      '旅先天気情報の取得 — ' + cityJa,
+      'Travel weather data — ' + cityJa,
       '$0.01 USDC',
       'エラー: ' + e.message)
   } finally {
@@ -2154,12 +2154,12 @@ function closeBudgetModal() {
 
 function submitBudget() {
   const val = parseFloat(document.getElementById('budget-custom-input').value) || 0
-  if (val <= 0) { showToast('予算を入力してください'); return }
+  if (val <= 0) { showToast('Please enter your budget'); return }
   budgetState.amount = val
   closeBudgetModal()
   // チャットに反映
   addMessage('user', \`予算は $\${val} USD でお願いします\`)
-  const reply = \`ホホウ！かしこまりました。$\${val} USD の予算で、ズックが全力で最適な一択をコーディネートいたします。Kite Passportに予算セッションを設定し、ルール内で自動手配いたします。どんな旅をご希望ですか？\`
+  const reply = \`ホホウ！かしこまりました。$\${val} USD の予算で、ZUKKUが全力で最適な一択をコーディネートいたします。Kite Passportに予算セッションを設定し、ルール内で自動手配いたします。どんな旅をご希望ですか？\`
   addMessage('assistant', reply)
   speak(reply)
   // Kiteパネルの上限表示を更新
@@ -2169,33 +2169,77 @@ function submitBudget() {
 }
 
 // ============================================
-// A2A SIMULATION
+// A2A SIMULATION — 3宿主ダミーウォレット
 // ============================================
-const A2A_STEPS = [
-  { cls: '', text: '[ ZUKKU ] システム起動 — Kite Passport セッション agent_session_019e1948... を確認' },
-  { cls: '', text: '[ ZUKKU → 屋久島 森の宿 縄文庵 ] HTTP GET /api/availability?date=2025-06-01&guests=2' },
-  { cls: 'highlight', text: '[ 縄文庵 ] 200 OK | 空き有 | 標準価格 $302/泊' },
-  { cls: '', text: '[ ZUKKU ] 交渉開始 — POST /api/negotiate { guests:2, nights:3, preference:"secluded" }' },
-  { cls: 'highlight', text: '[ 縄文庵 ] 交渉応答: $280/泊 (値引き 7.3%) | 専属ガイド付き' },
-  { cls: '', text: '[ ZUKKU ] 条件承認 — POST /api/book { session_id:"...", nights:3 }' },
-  { cls: 'payment', text: '[ 縄文庵 ] HTTP 402 Payment Required' },
-  { cls: 'payment', text: '  payment-required: { network:"kite-2366", amount:"840.00", currency:"USDC", address:"0x9f3a..." }' },
-  { cls: 'payment', text: '[ ZUKKU → Kite Passport ] x402決済リクエスト | $840 USDC | セッション上限内を確認...' },
-  { cls: 'payment', text: '[ Kite Passport ] 決済実行 | TX: 0x7f2c...a491 | ブロック確認待機中...' },
-  { cls: 'highlight', text: '[ Kite Chain #2366 ] ブロック確認完了 | TX: 0x7f2c4d8e...a491 | USDC $840.00 送金完了' },
-  { cls: 'highlight', text: '[ 縄文庵 ] 予約確認 | ブッキングID: YKS-20250601-042 | チェックイン 2025-06-01' },
-  { cls: '', text: '[ ZUKKU ] 関連アイテム自動購入中 — トレッキングソックス, 行動食セット...' },
-  { cls: 'highlight', text: '[ COMPLETE ] 全手配完了 — ユーザー決済操作: 0回 | Kite x402により完全自律実行 ♥' },
+// 宿主エージェント（ダミーウォレット） — 受け取り側はPassport不要
+const A2A_MERCHANTS = [
+  {
+    name: 'Yakushima Forest Lodge Jomonan', short: '縄文庵',
+    wallet: '0x13D8D465285f39F53eB4C10e953258a72587B388',
+    price: 302, negotiated: 280, nights: 3, total: 840,
+    bookingId: 'YKS-20250601-042', checkIn: '2025-06-01',
+    items: ['Waterproof Trekking Socks', '行動食セット', '虫除けスプレー'], itemTotal: 35,
+  },
+  {
+    name: 'Okuhida Hakuunsou Mountain Inn', short: '白雲荘',
+    wallet: '0xa5974eb874252E32e9DE43E93eAf8c93499693a4',
+    price: 255, negotiated: 235, nights: 2, total: 470,
+    bookingId: 'HID-20250615-017', checkIn: '2025-06-15',
+    items: ['温泉タオルセット', '保湿ミスト', '浴衣（高品質）'], itemTotal: 59,
+  },
+  {
+    name: 'Goto Islands Tsubaki Inn Kaine', short: '海音',
+    wallet: '0xCd2f61E96b810887429f25071ca34625735b5e83',
+    price: 215, negotiated: 200, nights: 3, total: 600,
+    bookingId: 'GOT-20250701-009', checkIn: '2025-07-01',
+    items: ['防水カメラポーチ', '日焼け止めSPF50', '天然石パワーストーン'], itemTotal: 38,
+  },
 ]
+
+let a2aCurrentMerchant = 0
+
+function buildA2ASteps(m) {
+  const fromAddr = '0x4580D0C762a6988836e06acF6f59a654baf57869'
+  const toAddr   = m.wallet
+  const toShort  = toAddr.slice(0,6) + '...' + toAddr.slice(-4)
+  const fromShort= fromAddr.slice(0,6) + '...' + fromAddr.slice(-4)
+  const rnd = () => Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('')
+  const txHash = '0x' + rnd() + '…'
+  const itHash = '0x' + rnd() + '…'
+  const disc = Math.round((1 - m.negotiated / m.price) * 100)
+  return [
+    { cls: '', text: '[ ZUKKU Agent ] Boot — Kite Passport session agent_session_019e1948... verified' },
+    { cls: '', text: '[ ZUKKU >> ' + m.name + ' ] HTTP GET /api/availability?date=' + m.checkIn + '&guests=2' },
+    { cls: 'highlight', text: '[ ' + m.short + ' ] 200 OK | Available | Standard price $' + m.price + '/泊 | wallet: ' + toShort + '' },
+    { cls: '', text: '[ ZUKKU ] Negotiate POST /api/negotiate { nights:' + m.nights + ', preference:"secluded", hint:"$' + m.negotiated + '" }' },
+    { cls: 'highlight', text: '[ ' + m.short + ' ] Negotiation response: $' + m.negotiated + '/泊 (discount ' + disc + '%) | terms accepted' },
+    { cls: '', text: '[ ZUKKU ] Booking request POST /api/book { nights:' + m.nights + ', total:"$' + m.total + '" }' },
+    { cls: 'payment', text: '[ ' + m.short + ' ] HTTP 402 Payment Required' },
+    { cls: 'payment', text: '  payment-required: { network:"kite-2366", amount:"' + m.total + '.00", currency:"USDC",' },
+    { cls: 'payment', text: '    to:"' + toAddr + '" }' },
+    { cls: 'payment', text: '[ ZUKKU >> Kite Passport ] x402 payment | $' + m.total + ' USDC | from:' + fromShort + ' >> to:' + toShort + '' },
+    { cls: 'payment', text: '[ Kite Passport ] Session balance OK >> payment approved | TX: ' + txHash + '' },
+    { cls: 'highlight', text: '[ Kite Chain #2366 ] ✓ Block confirmed | USDC ' + m.total + '.00 transferred' },
+    { cls: 'highlight', text: '  from: ' + fromAddr },
+    { cls: 'highlight', text: '  to:   ' + toAddr },
+    { cls: 'highlight', text: '[ ' + m.short + ' ] Booking confirmed ✓ | ID: ' + m.bookingId + ' | Check-in: ' + m.checkIn + '' },
+    { cls: '', text: '[ ZUKKU ] Auto-purchasing essentials — ' + m.items.join(', ') + '' },
+    { cls: 'payment', text: '[ Kite Chain #2366 ] Item TX: ' + itHash + ' | USDC ' + m.itemTotal + '.00 transferred' },
+    { cls: 'highlight', text: '[ COMPLETE ✓ ] Stay $' + m.total + ' +  + Items $' + m.itemTotal + ' = Total $' + m.total + m.itemTotal + ' USDC' },
+    { cls: 'highlight', text: '  User payment actions: 0 | Fully autonomous via Kite x402 Agent-to-Agent ♥' },
+  ]
+}
 
 async function runA2ASimulation() {
   const btn = document.getElementById('a2a-simulate-btn')
   const log = document.getElementById('a2a-log')
   btn.disabled = true
-  btn.textContent = '実行中…'
-  log.innerHTML = ''
-  for (const step of A2A_STEPS) {
-    await new Promise(r => setTimeout(r, 400))
+  const m = A2A_MERCHANTS[a2aCurrentMerchant % A2A_MERCHANTS.length]
+  a2aCurrentMerchant++
+  btn.textContent = 'Running… [' + m.short + ']'
+  log.innerHTML = '<div class="a2a-log-line" style="color:rgba(74,255,140,0.4)">▶ Simulation start — Host: ' + m.name + '</div>'
+  for (const step of buildA2ASteps(m)) {
+    await new Promise(r => setTimeout(r, 320))
     const line = document.createElement('div')
     line.className = 'a2a-log-line' + (step.cls ? ' ' + step.cls : '')
     line.textContent = step.text
@@ -2203,8 +2247,9 @@ async function runA2ASimulation() {
     log.scrollTop = log.scrollHeight
   }
   btn.disabled = false
-  btn.textContent = '↺ 再実行'
-  showToast('✓ A2Aシミュレーション完了 — ユーザー決済なしで全手配！')
+  const nextM = A2A_MERCHANTS[a2aCurrentMerchant % A2A_MERCHANTS.length]
+  btn.textContent = '↺ Next host: ' + nextM.short
+  showToast('✓ A2A complete [' + m.short + '] — $' + (m.total + m.itemTotal) + ' USDC autonomous payment!')
 }
 
 // メインTXフィード（トランザクションに購入内容の文字情報を表示）
@@ -2235,9 +2280,9 @@ function kiteShowWeather(city, data) {
   const bodyEl = document.getElementById('kite-weather-body')
   panel.style.display = 'block'
 
-  const cityNames = { Tokyo:'東京', Kyoto:'京都', Osaka:'大阪', Sapporo:'札幌',
-    Fukuoka:'福岡', Yakushima:'屋久島', Shirakawa:'白川郷' }
-  cityEl.textContent = '⛅ ' + (cityNames[city] || city) + ' の天気'
+  const cityNames = { Tokyo:'Tokyo', Kyoto:'Kyoto', Osaka:'Osaka', Sapporo:'Sapporo',
+    Fukuoka:'Fukuoka', Yakushima:'Yakushima', Shirakawa:'Shirakawa' }
+  cityEl.textContent = '⛅ ' + (cityNames[city] || city) + ' Weather'
 
   const condMap = { 'Partly cloudy':'くもり時々晴れ', 'Clear':'快晴', 'Sunny':'晴れ',
     'Cloudy':'くもり', 'Rain':'雨', 'Snow':'雪', 'Slight rain':'小雨' }
@@ -2272,7 +2317,7 @@ function kiteShowWeather(city, data) {
 // 新規セッション作成
 async function kiteCreateSession() {
   const btn = document.querySelector('.kite-new-session-btn')
-  btn.textContent = '作成中…'
+  btn.textContent = 'Creating…'
   btn.disabled = true
   try {
     const res = await fetch('/api/kite/session/create', {
@@ -2286,14 +2331,14 @@ async function kiteCreateSession() {
     const data = await res.json()
     if (data.approval_url) {
       window.open(data.approval_url, '_blank')
-      showToast('⬡ 承認URLを開きました。パスキーで承認してください。')
+      showToast('⬡ Approval URL opened. Please approve with your passkey.')
       // ポーリング開始
       if (data.request_id) kiteWaitForSession(data.request_id)
     }
   } catch(e) {
-    showToast('セッション作成エラー: ' + e.message)
+    showToast('Session creation error: ' + e.message)
   } finally {
-    btn.textContent = '+ 新しいセッションをリクエスト'
+    btn.textContent = '+ Request New Session'
     btn.disabled = false
   }
 }
@@ -2312,7 +2357,7 @@ async function kiteWaitForSession(requestId) {
           document.getElementById('kite-session-id').textContent = sid.slice(0,28) + '…'
           document.getElementById('kite-session-badge').textContent = '● セッション有効'
           document.getElementById('kite-session-badge').classList.remove('inactive')
-          showToast('✅ Kiteセッションが有効になりました！')
+          showToast('✅ Kite session is now active!')
         }
         return
       }
@@ -2326,9 +2371,9 @@ window.addEventListener('load', () => {
   state.recognition = initRecognition()
   setStep(1)
   kiteInit()
-  // 起動時にまずズックの挨拶を流してから予算モーダルを表示
+  // 起動時にまずZUKKUの挨拶を流してから予算モーダルを表示
   setTimeout(() => {
-    speak('ホホウ、いらっしゃいませ！わたくしズックと申します。まず、ご旅行のご予算をお聞かせください。')
+    speak("Oh-ho, welcome! I'm ZUKKU, your concierge. First, what's your travel budget?")
   }, 800)
   setTimeout(() => showBudgetModal(), 2200)
 })
