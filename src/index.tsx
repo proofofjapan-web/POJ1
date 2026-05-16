@@ -447,9 +447,9 @@ app.get('/', (c) => {
     #voice-section { display: flex; flex-direction: column; align-items: center; padding: 28px 36px 20px; }
 
     .ball-stage {
-      position: relative; width: 220px; height: 320px;
+      position: relative; width: 220px; height: auto; min-height: 240px;
       margin-bottom: 24px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
     }
 
     /* Soft ambient glow rings */
@@ -464,19 +464,21 @@ app.get('/', (c) => {
     @keyframes aura-float { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(1.75);opacity:0} }
 
     #zukku-ball {
-      width: 220px; height: 320px; position: relative; z-index: 2;
+      width: 220px; height: auto; max-height: 320px; position: relative; z-index: 2;
       filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 12px rgba(201,168,76,0.1));
-      transition: filter 0.5s;
+      transition: filter 0.5s, transform 0.3s;
+      border-radius: 16px;
     }
     .ball-stage.listening #zukku-ball {
-      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 40px rgba(201,168,76,0.5));
+      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 40px rgba(201,168,76,0.5)) brightness(1.08);
       animation: ball-breathe 1.8s ease-in-out infinite;
     }
     .ball-stage.speaking #zukku-ball {
-      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 56px rgba(201,168,76,0.65));
+      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 56px rgba(201,168,76,0.65)) brightness(1.12);
       animation: ball-speak 0.4s ease-in-out infinite alternate;
     }
     .ball-stage.thinking #zukku-ball {
+      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 24px rgba(120,160,255,0.4));
       animation: ball-think 2s ease-in-out infinite;
     }
     @keyframes ball-breathe { 0%,100%{transform:scale(1) translateY(0)} 50%{transform:scale(1.04) translateY(-4px)} }
@@ -911,343 +913,19 @@ app.get('/', (c) => {
       <div class="ball-aura"></div>
       <div class="ball-aura"></div>
 
-      <!--  ZUKKU v6 SVG character  -->
-      <svg id="zukku-ball" viewBox="0 0 220 320" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- warm white (body / head) -->
-          <radialGradient id="bodyGrad" cx="33%" cy="24%" r="76%">
-            <stop offset="0%"   stop-color="#FAFAF8"/>
-            <stop offset="38%"  stop-color="#EEECE8"/>
-            <stop offset="72%"  stop-color="#D9D5CE"/>
-            <stop offset="100%" stop-color="#C2BEB6"/>
-          </radialGradient>
-          <!-- red (ears / wings / top panel) -->
-          <radialGradient id="redGrad" cx="28%" cy="20%" r="78%">
-            <stop offset="0%"   stop-color="#FF7060"/>
-            <stop offset="45%"  stop-color="#D63520"/>
-            <stop offset="100%" stop-color="#8C1A0C"/>
-          </radialGradient>
-          <!-- red shadow / dark side -->
-          <linearGradient id="redShadow" x1="0%" y1="0%" x2="60%" y2="100%">
-            <stop offset="0%"   stop-color="#A82818"/>
-            <stop offset="100%" stop-color="#620E04"/>
-          </linearGradient>
-          <!-- eye frame (black) -->
-          <radialGradient id="eyeBlack" cx="38%" cy="32%" r="66%">
-            <stop offset="0%"   stop-color="#1E1A18"/>
-            <stop offset="100%" stop-color="#060402"/>
-          </radialGradient>
-          <!-- camera outer ring grey -->
-          <radialGradient id="camOuter" cx="36%" cy="28%" r="68%">
-            <stop offset="0%"   stop-color="#D0CCC8"/>
-            <stop offset="58%"  stop-color="#A8A4A0"/>
-            <stop offset="100%" stop-color="#7A7672"/>
-          </radialGradient>
-          <!-- LED blue (default) -->
-          <radialGradient id="ledBlue" cx="34%" cy="28%" r="70%">
-            <stop offset="0%"   stop-color="#C0F4FF"/>
-            <stop offset="42%"  stop-color="#22B8F8"/>
-            <stop offset="100%" stop-color="#0450C0"/>
-          </radialGradient>
-          <!-- LED green (idle) -->
-          <radialGradient id="ledGreen" cx="34%" cy="28%" r="70%">
-            <stop offset="0%"   stop-color="#A0FFB8"/>
-            <stop offset="42%"  stop-color="#18D050"/>
-            <stop offset="100%" stop-color="#067020"/>
-          </radialGradient>
-          <!-- LED gold (speaking) -->
-          <radialGradient id="ledGold" cx="34%" cy="28%" r="70%">
-            <stop offset="0%"   stop-color="#FFF8A8"/>
-            <stop offset="42%"  stop-color="#E8C038"/>
-            <stop offset="100%" stop-color="#A06808"/>
-          </radialGradient>
-          <!-- drop shadow -->
-          <radialGradient id="dropShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stop-color="rgba(0,0,0,0.65)"/>
-            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-          </radialGradient>
-          <!-- wing gradient (front highlight) -->
-          <linearGradient id="wingFront" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%"   stop-color="#FF7860"/>
-            <stop offset="50%"  stop-color="#D43520"/>
-            <stop offset="100%" stop-color="#7A1208"/>
-          </linearGradient>
+      <!-- ZUKKU real photo — blue version -->
+      <img id="zukku-ball"
+           src="https://www.genspark.ai/api/files/s/C8w7oMLj"
+           alt="ZUKKU"
+           width="220"
+           style="height:auto;position:relative;z-index:2;object-fit:contain;
+                  filter:drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 12px rgba(201,168,76,0.1));
+                  transition:filter 0.5s,transform 0.3s;" />
 
-          <!-- filters -->
-          <filter id="bodyShad" x="-14%" y="-6%" width="128%" height="124%">
-            <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="rgba(0,0,0,0.55)"/>
-          </filter>
-          <filter id="wingShad" x="-20%" y="-8%" width="140%" height="120%">
-            <feDropShadow dx="4" dy="7" stdDeviation="8" flood-color="rgba(0,0,0,0.45)"/>
-          </filter>
-          <filter id="earShad" x="-30%" y="-20%" width="160%" height="150%">
-            <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="rgba(0,0,0,0.40)"/>
-          </filter>
-          <!-- eye glow idle/thinking -->
-          <filter id="eyeGlowWhite" x="-65%" y="-65%" width="230%" height="230%">
-            <feGaussianBlur stdDeviation="2.5" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <!-- eye glow listening -->
-          <filter id="eyeGlowGold" x="-85%" y="-85%" width="270%" height="270%">
-            <feGaussianBlur stdDeviation="5.5" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <!-- eye glow speaking -->
-          <filter id="eyeGlowBright" x="-110%" y="-110%" width="320%" height="320%">
-            <feGaussianBlur stdDeviation="9" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <!-- LED glow -->
-          <filter id="ledGlow" x="-52%" y="-52%" width="204%" height="204%">
-            <feGaussianBlur stdDeviation="6" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-
-        <!-- drop shadow -->
-        <ellipse cx="110" cy="316" rx="62" ry="8" fill="url(#dropShadow)"/>
-
-        <!-- ============================================================
-             翼 — 実物: 胴体幅より大きく張り出す板状の翼
-             根元は肩位置（y≈178）から始まり、下端（y≈272）まで伸びる
-             外側へ大きくはみ出す（左: x=0まで、右: x=220まで）
-        ============================================================ -->
-        <!-- 左翼 -->
-        <g filter="url(#wingShad)">
-          <!-- 翼本体 -->
-          <path d="M 42 176
-                   C 28 172  10 172   2 182
-                   C -4 192  -2 214   6 238
-                   C 12 254  24 264  36 264
-                   C 46 264  52 256  50 244
-                   C 48 230  44 210  42 176 Z"
-                fill="url(#wingFront)"/>
-          <!-- 翼内側（暗面） -->
-          <path d="M 40 182
-                   C 28 178  14 178   8 188
-                   C 4 196   6 216  12 236
-                   C 18 250  28 260  38 258
-                   C 44 256  48 248  46 238
-                   C 44 224  40 202  40 182 Z"
-                fill="url(#redShadow)" opacity="0.50"/>
-          <!-- ハイライトライン（翼の前縁） -->
-          <path d="M 16 184 C 8 192 4 210 8 232 C 12 248 22 258 32 260"
-                stroke="rgba(255,180,160,0.35)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <!-- 翼の縦方向テクスチャ溝 -->
-          <path d="M 28 188 C 24 202 22 222 26 244"
-                stroke="rgba(60,8,2,0.28)" stroke-width="1.2" fill="none"/>
-          <path d="M 36 182 C 34 198 32 220 34 248"
-                stroke="rgba(60,8,2,0.20)" stroke-width="1.0" fill="none"/>
-        </g>
-        <!-- 右翼 -->
-        <g filter="url(#wingShad)">
-          <path d="M 178 176
-                   C 192 172  210 172  218 182
-                   C 224 192  222 214  214 238
-                   C 208 254  196 264  184 264
-                   C 174 264  168 256  170 244
-                   C 172 230  176 210  178 176 Z"
-                fill="url(#wingFront)"/>
-          <path d="M 180 182
-                   C 192 178  206 178  212 188
-                   C 216 196  214 216  208 236
-                   C 202 250  192 260  182 258
-                   C 176 256  172 248  174 238
-                   C 176 224  180 202  180 182 Z"
-                fill="url(#redShadow)" opacity="0.50"/>
-          <path d="M 204 184 C 212 192 216 210 212 232 C 208 248 198 258 188 260"
-                stroke="rgba(255,180,160,0.35)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <path d="M 192 188 C 196 202 198 222 194 244"
-                stroke="rgba(60,8,2,0.28)" stroke-width="1.2" fill="none"/>
-          <path d="M 184 182 C 186 198 188 220 186 248"
-                stroke="rgba(60,8,2,0.20)" stroke-width="1.0" fill="none"/>
-        </g>
-
-        <!-- ============================================================
-             ボディ — 縦長の丸みある円筒
-             実物: 頭部と同程度か少し広く、高さは頭部より長い
-        ============================================================ -->
-        <rect x="42" y="170" width="136" height="122" rx="22" ry="22"
-              fill="url(#bodyGrad)" filter="url(#bodyShad)"/>
-        <!-- ボディ底部の台座（丸みある台形） -->
-        <rect x="36" y="266" width="148" height="28" rx="16" ry="16"
-              fill="#C8C5C1"/>
-        <rect x="36" y="266" width="148" height="7" rx="3"
-              fill="rgba(0,0,0,0.12)"/>
-
-        <!-- ============================================================
-             頭部 — 横に広い半球状、ボディよりやや広め
-             実物: 横幅≈ボディ幅、縦高さはやや短め（横長寄り）
-        ============================================================ -->
-        <ellipse cx="110" cy="118" rx="76" ry="68"
-                 fill="url(#bodyGrad)" filter="url(#bodyShad)"/>
-        <!-- 頭部左上ハイライト（光沢感） -->
-        <ellipse cx="83" cy="86" rx="34" ry="23"
-                 fill="rgba(255,255,255,0.28)" transform="rotate(-18,83,86)"/>
-        <ellipse cx="74" cy="78" rx="18" ry="12"
-                 fill="rgba(255,255,255,0.16)" transform="rotate(-18,74,78)"/>
-
-        <!-- 頭とボディの接合部（黒い帯） -->
-        <rect x="42" y="170" width="136" height="9" rx="0"
-              fill="#141210"/>
-        <!-- 帯上縁を滑らかに -->
-        <rect x="42" y="170" width="136" height="4" rx="2"
-              fill="rgba(0,0,0,0)"/>
-
-        <!-- ============================================================
-             耳（頭頂突起） — 実物: 存在感のある円錐状三角突起
-             根元幅約34px、高さ約46px、やや外側に開く
-             色: 鮮やかな赤、先端は尖り気味
-        ============================================================ -->
-        <!-- 左耳 本体 -->
-        <g filter="url(#earShad)">
-          <path d="M 58 70  L 40 22  L 84 44  Z"
-                fill="url(#redGrad)"/>
-          <!-- 左耳 内側面（暗め） -->
-          <path d="M 60 68  L 46 26  L 82 46  Z"
-                fill="url(#redShadow)" opacity="0.62"/>
-          <!-- 左耳 ハイライト縁 -->
-          <path d="M 44 26 L 62 68" stroke="rgba(255,160,140,0.38)" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <!-- 左耳 内部テクスチャ溝 -->
-          <path d="M 50 32 L 78 46" stroke="rgba(40,4,0,0.42)" stroke-width="1.4" fill="none"/>
-          <path d="M 47 42 L 74 52" stroke="rgba(40,4,0,0.28)" stroke-width="1.0" fill="none"/>
-          <path d="M 46 52 L 70 59" stroke="rgba(40,4,0,0.18)" stroke-width="0.8" fill="none"/>
-        </g>
-        <!-- 右耳 本体 -->
-        <g filter="url(#earShad)">
-          <path d="M 162 70  L 180 22  L 136 44  Z"
-                fill="url(#redGrad)"/>
-          <!-- 右耳 内側面 -->
-          <path d="M 160 68  L 174 26  L 138 46  Z"
-                fill="url(#redShadow)" opacity="0.62"/>
-          <!-- 右耳 ハイライト縁 -->
-          <path d="M 176 26 L 158 68" stroke="rgba(255,160,140,0.38)" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <!-- 右耳 内部テクスチャ溝 -->
-          <path d="M 170 32 L 142 46" stroke="rgba(40,4,0,0.42)" stroke-width="1.4" fill="none"/>
-          <path d="M 173 42 L 146 52" stroke="rgba(40,4,0,0.28)" stroke-width="1.0" fill="none"/>
-          <path d="M 174 52 L 150 59" stroke="rgba(40,4,0,0.18)" stroke-width="0.8" fill="none"/>
-        </g>
-
-        <!-- ============================================================
-             頭頂パネル — 涙滴/盾形の赤いパネル、額〜頭頂
-             実物: 額から頭頂まで広がる盾形、表面に横溝3本
-        ============================================================ -->
-        <!-- パネル本体（盾形） -->
-        <path d="M 64 70
-                 C 66 56  74 42  110 36
-                 C 146 42  154 56  156 70
-                 C 148 64  132 60  110 59
-                 C 88 60   72 64  64 70 Z"
-              fill="url(#redGrad)" opacity="0.95"/>
-        <!-- パネル中央の縦方向リブ -->
-        <path d="M 110 38 L 110 58" stroke="rgba(40,4,0,0.30)" stroke-width="1.5" fill="none"/>
-        <!-- 横方向の溝3本（上から） -->
-        <path d="M 86 50 Q 110 45 134 50" stroke="rgba(40,4,0,0.38)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <path d="M 90 43 Q 110 38 130 43" stroke="rgba(40,4,0,0.28)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-        <!-- パネル上端ハイライト -->
-        <path d="M 94 40 Q 110 36 126 40" stroke="rgba(255,140,120,0.32)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <!-- 中央インジケーターLED -->
-        <circle cx="110" cy="56" r="5.5" fill="#8A1408" opacity="0.7"/>
-        <circle cx="110" cy="55" r="3"   fill="rgba(255,110,90,0.40)"/>
-
-        <!-- ============================================================
-             目 — 黒い外枠 >> 白/薄紫LEDリング >> 黒瞳
-             実物: 頭幅の約1/6サイズ、目間隔はほぼ1個分
-        ============================================================ -->
-        <!-- 左目 外枠（深い黒） -->
-        <circle cx="84"  cy="120" r="30" fill="url(#eyeBlack)"/>
-        <!-- 右目 外枠 -->
-        <circle cx="136" cy="120" r="30" fill="url(#eyeBlack)"/>
-
-        <!-- 左目 LEDリング（JSでstroke変更） -->
-        <circle id="eye-l" cx="84"  cy="120" r="22"
-                fill="none" stroke="#E0DAF4" stroke-width="6.5"
-                filter="url(#eyeGlowWhite)"/>
-        <!-- 右目 LEDリング -->
-        <circle id="eye-r" cx="136" cy="120" r="22"
-                fill="none" stroke="#E0DAF4" stroke-width="6.5"
-                filter="url(#eyeGlowWhite)"/>
-
-        <!-- 左目 瞳（黒・小さめ） -->
-        <circle cx="84"  cy="120" r="12" fill="#040302"/>
-        <!-- 右目 瞳 -->
-        <circle cx="136" cy="120" r="12" fill="#040302"/>
-
-        <!-- 目のガラス反射ハイライト -->
-        <circle cx="77"  cy="113" r="4"   fill="rgba(255,255,255,0.55)"/>
-        <circle cx="129" cy="113" r="4"   fill="rgba(255,255,255,0.55)"/>
-        <circle cx="75"  cy="111" r="2"   fill="rgba(255,255,255,0.80)"/>
-        <circle cx="127" cy="111" r="2"   fill="rgba(255,255,255,0.80)"/>
-
-        <!-- JS互換ダミー -->
-        <circle id="pupil-l" cx="84"  cy="120" r="0" fill="transparent"/>
-        <circle id="pupil-r" cx="136" cy="120" r="0" fill="transparent"/>
-
-        <!-- ============================================================
-             くちばし — 黄色い菱形、両目の下・顔面中央
-             実物: 鮮やかな黄、コンパクトなシャープな菱形
-        ============================================================ -->
-        <path d="M 110 136  L 100 146  L 110 155  L 120 146 Z" fill="#F2C412"/>
-        <!-- 上半分ハイライト -->
-        <path d="M 110 136  L 100 146  L 110 151 Z" fill="rgba(255,248,140,0.68)"/>
-        <!-- 下半分シャドウ -->
-        <path d="M 110 155  L 100 146  L 106 146  Z" fill="rgba(0,0,0,0.18)"/>
-        <!-- くちばし縁取り -->
-        <path d="M 110 136  L 100 146  L 110 155  L 120 146 Z"
-              fill="none" stroke="rgba(160,96,0,0.30)" stroke-width="0.8"/>
-
-        <!-- ============================================================
-             カメラユニット — ボディ上部1/3中央のグレー円形
-             実物: 外枠グレー、内側ダーク枠、中央黒レンズ、少し突出
-        ============================================================ -->
-        <!-- カメラ外枠（グレー） -->
-        <circle cx="110" cy="206" r="27" fill="url(#camOuter)"/>
-        <circle cx="110" cy="206" r="27" fill="none"
-                stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-        <!-- 外枠に微妙な段差感 -->
-        <circle cx="110" cy="206" r="24" fill="none"
-                stroke="rgba(0,0,0,0.14)" stroke-width="2"/>
-        <!-- 内側ベゼル（ダーク） -->
-        <circle cx="110" cy="206" r="20" fill="#1C1A18"/>
-        <!-- レンズ本体 -->
-        <circle cx="110" cy="206" r="14" fill="#040302"/>
-        <!-- レンズ反射 -->
-        <circle cx="103" cy="199" r="4"   fill="rgba(255,255,255,0.18)"/>
-        <circle cx="101" cy="197" r="2"   fill="rgba(255,255,255,0.32)"/>
-        <!-- カメラ上部インジケーターLED（小さな赤点） -->
-        <circle cx="110" cy="181" r="3.5" fill="#8A8886"/>
-        <circle cx="110" cy="181" r="2"   fill="#C8C6C4"/>
-
-        <!-- ============================================================
-             LEDボタン — ボディ下部中央の大きな発光ボタン
-             実物: 胴体幅の1/3程度、青く発光、ベゼル付き円盤
-        ============================================================ -->
-        <!-- ベゼル外枠（グレー） -->
-        <circle cx="110" cy="256" r="26"
-                fill="#D4D0CC" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>
-        <!-- ベゼル内枠（少し暗く） -->
-        <circle cx="110" cy="256" r="23"
-                fill="#C0BDBA"/>
-        <!-- LED発光部 -->
-        <circle id="belly-glow" cx="110" cy="256" r="19"
-                fill="url(#ledBlue)" filter="url(#ledGlow)"/>
-        <!-- LEDハイライト -->
-        <ellipse cx="104" cy="248" rx="8" ry="5.5"
-                 fill="rgba(255,255,255,0.42)" transform="rotate(-12,104,248)"/>
-
-        <!-- ============================================================
-             足 — 黒い幅広ブロック×2、ボディ最下部
-             実物: 短く幅広、左右に離れて配置
-        ============================================================ -->
-        <!-- 左足 -->
-        <rect x="50"  y="280" width="36" height="20" rx="10" ry="10" fill="#141210"/>
-        <!-- 右足 -->
-        <rect x="134" y="280" width="36" height="20" rx="10" ry="10" fill="#141210"/>
-        <!-- 足ハイライト -->
-        <rect x="55"  y="283" width="16" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>
-        <rect x="139" y="283" width="16" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>
-      </svg>
+      <!-- Dummy overlay elements so setBallState() getElementById calls don't crash -->
+      <div id="eye-l"    style="display:none"></div>
+      <div id="eye-r"    style="display:none"></div>
+      <div id="belly-glow" style="display:none"></div>
 
       <div class="ball-label">ZUKKU</div>
     </div>
@@ -1261,7 +939,7 @@ app.get('/', (c) => {
     <div class="transcript-area">
       <div class="transcript-user" id="user-transcript"></div>
       <div class="transcript-agent">
-        <span id="agent-text">Oh-ho, welcome! I'm ズック — your personal travel concierge. What kind of journey are you dreaming of?</span>
+        <span id="agent-text">Oh-ho, welcome! I'm ZUKKU — your personal travel concierge. What kind of journey are you dreaming of?</span>
       </div>
     </div>
 
@@ -1282,7 +960,7 @@ app.get('/', (c) => {
 
   <!-- MAIN CONTENT -->
   <main id="main-content">
-    <div id="status-bar"><div class="status-dot"></div><span id="status-text">ズック is online and ready</span></div>
+    <div id="status-bar"><div class="status-dot"></div><span id="status-text">ZUKKU is online and ready</span></div>
 
     <!-- WALLET -->
     <div id="wallet-panel" class="panel">
@@ -1539,16 +1217,13 @@ app.get('/', (c) => {
 
 <script>
 // ===== TTS PREPROCESSING =====
-// CRITICAL: "ZUKKU" must ALWAYS be pronounced as "ズック" (Zukku) in Japanese phonetics.
-// Strategy: Replace ZUKKU with the Japanese katakana "ズック" so the speech engine
-// pronounces it correctly regardless of the voice language selected.
+// "ZUKKU" is spoken naturally by the en-US voice as "ZUK-koo" — phonetically close to Japanese.
+// No character substitution needed. Only fix hiragana typos for consistency.
 function preprocessTTS(text) {
-  // Replace all variants of ZUKKU with Japanese katakana for correct pronunciation
-  return text
-    .replace(/ZUKKU/g, 'ズック')   // uppercase exact match
-    .replace(/zukku/g, 'ズック')   // lowercase
-    .replace(/Zukku/g, 'ズック')   // title case
-    .replace(/ずっく/g, 'ズック')  // hiragana → katakana
+  // "ZUKKU" is spoken naturally by the en-US voice engine as "ZUK-koo".
+  // No conversion needed — the English voice pronounces it correctly.
+  // Only convert hiragana typo to display-friendly katakana for UI text.
+  return text.replace(/ずっく/g, 'ZUKKU')
 }
 
 // ===== EXPERIENCE ICONS =====
@@ -1582,84 +1257,40 @@ function setStep(n) {
 function setBallState(s) {
   const stage = document.getElementById('ball-stage')
   stage.className = 'ball-stage ' + s
-  const eyeL  = document.getElementById('eye-l')
-  const eyeR  = document.getElementById('eye-r')
-  const belly = document.getElementById('belly-glow')
+  // ZUKKU is now a real photo — animations are handled entirely by CSS classes.
+  // No SVG element manipulation needed.
   if (s === 'listening') {
-    // ゴールドLEDリング + 強グロウ
-    eyeL.setAttribute('stroke', '#E8C050')
-    eyeR.setAttribute('stroke', '#E8C050')
-    eyeL.setAttribute('stroke-width', '5')
-    eyeR.setAttribute('stroke-width', '5')
-    eyeL.setAttribute('filter', 'url(#eyeGlowGold)')
-    eyeR.setAttribute('filter', 'url(#eyeGlowGold)')
-    belly.setAttribute('fill', '#C9A84C')
     startWaveAnimation()
-  } else if (s === 'speaking') {
-    // 明るいゴールドLEDリング + 最強グロウ（発話中）
-    eyeL.setAttribute('stroke', '#FFF0A0')
-    eyeR.setAttribute('stroke', '#FFF0A0')
-    eyeL.setAttribute('stroke-width', '5.5')
-    eyeR.setAttribute('stroke-width', '5.5')
-    eyeL.setAttribute('filter', 'url(#eyeGlowBright)')
-    eyeR.setAttribute('filter', 'url(#eyeGlowBright)')
-    belly.setAttribute('fill', '#E8C96A')
-  } else if (s === 'thinking') {
-    // 薄い白LEDリング + 弱グロウ（考え中）
-    eyeL.setAttribute('stroke', '#9090A0')
-    eyeR.setAttribute('stroke', '#9090A0')
-    eyeL.setAttribute('stroke-width', '3.5')
-    eyeR.setAttribute('stroke-width', '3.5')
-    eyeL.setAttribute('filter', 'url(#eyeGlowWhite)')
-    eyeR.setAttribute('filter', 'url(#eyeGlowWhite)')
-    belly.setAttribute('fill', '#666')
-  } else {
-    // idle：白いLEDリング + やわらかいグロウ
-    eyeL.setAttribute('stroke', '#F0EBE0')
-    eyeR.setAttribute('stroke', '#F0EBE0')
-    eyeL.setAttribute('stroke-width', '4.5')
-    eyeR.setAttribute('stroke-width', '4.5')
-    eyeL.setAttribute('filter', 'url(#eyeGlowWhite)')
-    eyeR.setAttribute('filter', 'url(#eyeGlowWhite)')
-    belly.setAttribute('fill', '#3a8a3a')
+  } else if (s !== 'speaking' && s !== 'thinking') {
     stopWaveAnimation()
   }
 }
 
 // ===== TTS =====
-// Speaks text using English voice. "ZUKKU" is pre-converted to "ズック" by preprocessTTS()
-// so the English voice engine will approximate the Japanese pronunciation naturally.
-// The lang is set to 'ja-JP' ONLY when the processed text contains Japanese characters,
-// ensuring "ズック" is always spoken correctly by a Japanese voice engine.
+// Always speaks in en-US for natural native English pronunciation.
+// ZUKKU is spoken naturally as "ZUK-koo" by the English voice engine — no conversion needed.
 function speak(text, onEnd) {
   if (!state.synthesis) return onEnd && onEnd()
   state.synthesis.cancel()
   const ttsText = preprocessTTS(text)
   
-  // Detect if processed text contains Japanese characters (ズック will trigger this)
-  const hasJapanese = /[\u3040-\u30FF\u4E00-\u9FFF]/.test(ttsText)
-  
+  // Always use en-US for natural English pronunciation.
+  // ZUKKU is pronounced naturally as "ZUK-koo" by the English voice engine.
   const utter = new SpeechSynthesisUtterance(ttsText)
-  utter.lang = hasJapanese ? 'ja-JP' : 'en-US'
-  utter.rate = hasJapanese ? 0.87 : 0.92
+  utter.lang = 'en-US'
+  utter.rate = 0.90   // Warm concierge pace — clear and unhurried
   utter.pitch = 1.05
   utter.volume = 1.0
   
   const applyVoice = () => {
     const vs = state.synthesis.getVoices()
-    if (hasJapanese) {
-      // For text with ズック: prefer Japanese Google voice for accurate pronunciation
-      const jv = vs.find(v => v.lang === 'ja-JP' && v.name.includes('Google'))
-        || vs.find(v => v.lang === 'ja-JP')
-        || vs.find(v => v.lang.startsWith('ja'))
-      if (jv) utter.voice = jv
-    } else {
-      // Pure English: prefer en-US Google voice
-      const ev = vs.find(v => v.lang === 'en-US' && v.name.includes('Google'))
-        || vs.find(v => v.lang === 'en-US')
-        || vs.find(v => v.lang.startsWith('en'))
-      if (ev) utter.voice = ev
-    }
+    // Prefer Google en-US voices for the most natural output
+    const ev = vs.find(v => v.lang === 'en-US' && v.name.includes('Google'))
+      || vs.find(v => v.lang === 'en-US' && v.name.includes('Samantha'))
+      || vs.find(v => v.lang === 'en-US' && v.name.includes('Karen'))
+      || vs.find(v => v.lang === 'en-US')
+      || vs.find(v => v.lang.startsWith('en'))
+    if (ev) utter.voice = ev
   }
   applyVoice()
   setBallState('speaking'); state.speaking = true
@@ -1842,7 +1473,7 @@ async function selectExperience(id) {
 function showAuthorizeForExp(exp) {
   if (!state.walletConnected) { speak('Please connect your wallet first.'); connectWallet(); return }
   document.getElementById('authorize-amount-display').innerHTML = '$' + exp.priceUSD + '<span>USD</span>'
-  document.getElementById('authorize-desc').innerHTML = \`Booking: "\${exp.name}"<br>Your approval is all it takes — ズック will confirm everything instantly.<br>Related items will be auto-purchased within your rules.\`
+  document.getElementById('authorize-desc').innerHTML = \`Booking: "\${exp.name}"<br>Your approval is all it takes — ZUKKU will confirm everything instantly.<br>Related items will be auto-purchased within your rules.\`
   document.getElementById('authorize-section').classList.add('visible')
   setStep(2)
   setTimeout(() => document.getElementById('authorize-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
@@ -2193,7 +1824,7 @@ function submitBudget() {
   closeBudgetModal()
   // チャットに反映
   addMessage('user', \`My travel budget is $\${val} USD\`)
-  const reply = \`Oh-ho, perfect! With a $\${val} budget, ズック will find the ideal experience for you. Kite Passport session is all set — I'm ready to handle everything within that limit. What kind of trip are you dreaming of?\`
+  const reply = \`Oh-ho, perfect! With a $\${val} budget, ZUKKU will find the ideal experience for you. Kite Passport session is all set — I'm ready to handle everything within that limit. What kind of trip are you dreaming of?\`
   addMessage('assistant', reply)
   speak(reply)
   // Kiteパネルの上限表示を更新
