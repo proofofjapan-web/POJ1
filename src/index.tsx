@@ -1241,12 +1241,12 @@ app.get('/', (c) => {
 
 <script>
 // ===== TTS PREPROCESSING =====
-// ZUKKU must be pronounced as "ズック" (Zukku). We use SSML-style phonetic spelling:
+// ZUKKU must be pronounced as "Zukku" (ZOO-koo). We use phonetic spelling:
 // Replace ZUKKU with "Zukku" spelled out in a way the en-US voice reads as "ZUK-koo".
 // Best approach: replace with the IPA-friendly spelling "Zuku" which en-US voices
-// naturally pronounce as the two-syllable "ZOO-koo" — closest to Japanese "ズック".
+// naturally pronounced as the two-syllable "ZOO-koo" by the en-US engine.
 function preprocessTTS(text) {
-  // Replace ZUKKU/Zukku/zukku with phonetic spelling so en-US TTS says "ZOO-koo" (≈ ズック)
+  // Replace ZUKKU/Zukku/zukku with phonetic spelling so en-US TTS says "ZOO-koo"
   // "Zooku" reliably triggers the correct two-syllable pronunciation in most en-US voices
   return text
     .replace(/ZUKKU/g, 'Zooku')
@@ -1297,7 +1297,7 @@ function setBallState(s) {
 
 // ===== TTS =====
 // Always speaks in en-US. "ZUKKU" is converted to "Zooku" by preprocessTTS()
-// so the en-US voice engine pronounces it as "ZOO-koo" ≈ Japanese "ズック".
+// so the en-US voice engine pronounces it as "ZOO-koo" (approx. Japanese "Zukku").
 function speak(text, onEnd) {
   if (!state.synthesis) return onEnd && onEnd()
   state.synthesis.cancel()
