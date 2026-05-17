@@ -889,6 +889,11 @@ app.get('/', (c) => {
       <span class="logo-sub">by ZUKKU</span>
     </div>
     <div class="header-right">
+      <div id="spent-bar" style="display:none;align-items:center;gap:6px;font-size:11px;color:rgba(245,245,240,0.55);padding:4px 12px;border:1px solid rgba(201,168,76,0.2);border-radius:20px;background:rgba(201,168,76,0.05)">
+        <span style="color:rgba(201,168,76,0.6)">⬡</span>
+        Spent <strong id="spent-total-display" style="color:var(--gold)">$0.00</strong>
+        <span style="color:rgba(245,245,240,0.3)">/ cap <span id="budget-cap-display" style="color:rgba(245,245,240,0.55)">—</span></span>
+      </div>
       <div class="wallet-status">
         <div class="wallet-dot" id="wallet-dot"></div>
         <span id="wallet-label">Not connected</span>
@@ -993,6 +998,9 @@ app.get('/', (c) => {
     <!-- AGENT RULES -->
     <div id="agent-rules-panel" class="panel">
       <div class="panel-title">◈ Autonomous Agent Rules <span class="mock-badge">Kite Rules</span></div>
+      <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--white-dim)">
+        💰 Your current budget cap: <strong id="rule-budget-display" style="color:var(--gold)">not set</strong> — experiences at or below this amount are booked automatically without approval.
+      </div>
       <div class="rules-grid">
         <div><div class="rule-label">Auto-purchase limit ($)</div><input class="rule-input" type="number" id="rule-max-spend" value="5000"></div>
         <div><div class="rule-label">Approval Threshold (USD)</div><input class="rule-input" type="number" id="rule-require-approval" value="5000"></div>
@@ -1125,37 +1133,42 @@ app.get('/', (c) => {
           <span class="kite-title">Kite Agent Passport</span>
           <span class="kite-badge" id="kite-session-badge">● Session Active</span>
         </div>
-        <div class="kite-subtitle">Autonomous payment layer via x402 protocol</div>
+        <div class="kite-subtitle">ZUKKU's autonomous payment engine — every booking & purchase goes through here</div>
+      </div>
+
+      <!-- What is Kite Passport — plain language -->
+      <div style="background:rgba(74,255,140,0.05);border:1px solid rgba(74,255,140,0.15);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:rgba(245,245,240,0.7);line-height:1.6">
+        ⬡ <strong style="color:rgba(74,255,140,0.9)">What is this?</strong> — Kite Passport is like a pre-authorized payment account for ZUKKU. Once activated, ZUKKU can pay for bookings and travel items on your behalf — up to your budget cap — without asking for approval each time. All transactions are recorded on Kite blockchain for transparency.
       </div>
 
       <!-- wallet info -->
       <div class="kite-wallet-row">
         <div class="kite-wallet-info">
-          <div class="kite-wallet-label">Agent Wallet</div>
+          <div class="kite-wallet-label">ZUKKU's Agent Wallet</div>
           <div class="kite-wallet-addr" id="kite-wallet-addr">0x4580...7869</div>
         </div>
         <div class="kite-balance-box">
-          <div class="kite-balance-label">Balance</div>
-          <div class="kite-balance-val" id="kite-balance">0 USDC</div>
+          <div class="kite-balance-label">Available</div>
+          <div class="kite-balance-val" id="kite-balance">Ready</div>
         </div>
       </div>
 
-      <!-- session info -->
+      <!-- session info + spent total -->
       <div class="kite-session-row">
         <div class="kite-session-info">
-          <div class="kite-session-label">Active Session</div>
+          <div class="kite-session-label">Session ID</div>
           <div class="kite-session-id" id="kite-session-id">agent_session_019e1948...</div>
         </div>
         <div class="kite-session-limits">
-          <span class="kite-limit">$2 / tx limit</span>
-          <span class="kite-limit">$10 total</span>
+          <span class="kite-limit">24h session</span>
+          <span class="kite-limit" id="kite-spent-label">Spent: <span id="kite-spent-display">0.00</span> USDC</span>
         </div>
       </div>
 
       <!-- x402 weather purchase demo -->
       <div class="kite-demo-section">
-        <div class="kite-demo-title">◈ x402 Travel Weather — Kite Payment Demo</div>
-        <div class="kite-demo-desc">Buy live travel weather via Kite x402 protocol — $0.01 USDC per query</div>
+        <div class="kite-demo-title">◈ Live Demo: Buy Travel Weather via x402</div>
+        <div class="kite-demo-desc">Try Kite's micro-payment protocol — $0.01 USDC per weather query, paid instantly on-chain</div>
         <div class="kite-city-row">
           <select id="kite-city-select" class="kite-select">
             <option value="Tokyo">Tokyo</option>
@@ -1474,10 +1487,16 @@ async function searchExperiences() {
 }
 
 function renderExperiences(exps) {
-  document.getElementById('exp-grid').innerHTML = exps.map(e => \`
+  _cachedExperiences = exps  // cache so selectExperience doesn't need to re-fetch
+  const cap = budgetState.amount || 0
+  document.getElementById('exp-grid').innerHTML = exps.map(e => {
+    const withinBudget = cap > 0 && e.priceUSD <= cap
+    const badge = withinBudget ? 'auto-ok' : 'needs-approval'
+    const label = withinBudget ? '\u2713 Auto-Book (within $' + cap + ')' : 'Approval Needed'
+    return \`
     <div class="exp-card" id="exp-\${e.id}" onclick="selectExperience('\${e.id}')">
       <img class="exp-card-img" src="\${e.image}" alt="\${e.name}" loading="lazy">
-      <div class="\${e.requiresApproval ? 'needs-approval' : 'auto-ok'}">\${e.requiresApproval ? 'Approval Needed' : 'Auto OK'}</div>
+      <div class="\${badge}">\${label}</div>
       <div class="exp-card-body">
         <div class="exp-category">\${EXP_ICONS[e.category] || '✦'} \${e.category}</div>
         <div class="exp-name">\${e.name}</div>
@@ -1489,30 +1508,67 @@ function renderExperiences(exps) {
           <div class="exp-score">★ \${e.score}</div>
         </div>
       </div>
-    </div>
-  \`).join('')
+    </div>\`
+  }).join('')
   document.getElementById('experience-section').classList.add('visible')
   document.getElementById('status-bar').style.display = 'flex'
-  showStatus('ZUKKU has curated your options — choose an experience to continue')
+  showStatus('ZUKKU has curated your options — tap any card to select')
   setTimeout(() => document.getElementById('experience-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
 }
 
 // ===== STEP 2: SELECT & AUTHORIZE =====
+// Cache from renderExperiences — avoids re-fetching on every card tap
+let _cachedExperiences = []
 let _selectExpLock = false
+
 async function selectExperience(id) {
-  if (_selectExpLock) return   // prevent double-tap
+  if (_selectExpLock) return  // prevent double-tap
   _selectExpLock = true
   document.querySelectorAll('.exp-card').forEach(c => { c.classList.remove('selected'); c.style.opacity = c.id === 'exp-'+id ? '1' : '0.5' })
   document.getElementById('exp-'+id).classList.add('selected')
-  // Find exp data from rendered cards
-  const res = await fetch('/api/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nights:2,guests:2}) }).then(r=>r.json()).catch(()=>null)
-  const exp = res?.experiences?.find(e => e.id === id)
+
+  // Use cached data; only fetch if cache is empty
+  let exp = _cachedExperiences.find(e => e.id === id)
+  if (!exp) {
+    const res = await fetch('/api/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nights:2,guests:2}) }).then(r=>r.json()).catch(()=>null)
+    _cachedExperiences = res?.experiences || []
+    exp = _cachedExperiences.find(e => e.id === id)
+  }
   if (!exp) { _selectExpLock = false; return }
   state.selectedExp = exp
-  speak('Great choice! Please give your approval and ZUKKU will confirm the booking instantly.', () => {
-    showAuthorizeForExp(exp)
-    setTimeout(() => { _selectExpLock = false }, 2000)
-  })
+
+  // Decide: auto-book if price is within user's budget cap, else require approval
+  const cap = budgetState.amount || 0
+  const needsApproval = cap > 0 ? (exp.priceUSD > cap) : true
+
+  if (!needsApproval) {
+    // Auto-book — no approval needed
+    speak('Great choice! At $' + exp.priceUSD + ' this is within your $' + cap + ' cap — ZUKKU is booking it automatically via Kite Passport!')
+    setBallState('thinking')
+    showLoading('Auto-booking within your budget cap...')
+    setTimeout(async () => {
+      hideLoading()
+      try {
+        const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount: exp.priceUSD, currency:'USDC', description: exp.name }) })
+        const pd = await pr.json(); addTxToFeed(pd)
+      } catch(e) {
+        addTxToFeed({ txHash:'0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: exp.priceUSD, currency:'USDC', status:'auto-booked' })
+      }
+      addSpent(exp.priceUSD)
+      flashKitePanel()
+      setStep(3)
+      setBallState('idle')
+      speak('Booking confirmed via Kite Passport! Now arranging your travel essentials automatically.')
+      setTimeout(() => startAutoPurchase(), 2000)
+      setTimeout(() => { _selectExpLock = false }, 2000)
+    }, 1200)
+  } else {
+    // Needs approval — show authorize UI immediately (no second tap needed)
+    speak('Great choice! This experience is above your auto-book threshold — please give your approval and ZUKKU will confirm instantly.', () => {
+      showAuthorizeForExp(exp)
+      setTimeout(() => { _selectExpLock = false }, 1500)
+    })
+  }
 }
 
 function showAuthorizeForExp(exp) {
@@ -1559,17 +1615,18 @@ async function authorizePayment() {
   showLoading('Processing payment on-chain...')
   try {
     const amount = state.selectedExp?.priceUSD || 100
-    const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount, currency:'USDC', description: state.selectedExp?.name||'体験予約' }) })
+    const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount, currency:'USDC', description: state.selectedExp?.name||'Experience booking' }) })
     const pd = await pr.json(); hideLoading(); addTxToFeed(pd)
-    speak('Payment confirmed via Kite Passport! Now, within your approved budget cap, ZUKKU will auto-arrange the essential travel items for your trip — such as transport passes and guides. You can see each transaction in real time below.')
+    addSpent(amount)
+    speak('Payment confirmed via Kite Passport! Now ZUKKU will auto-arrange your travel essentials within your budget cap. Watch each transaction appear in real time below.')
     setStep(3)
-    // Show Kite badge prominently before auto-purchase
     flashKitePanel()
     setTimeout(() => startAutoPurchase(), 2500)
   } catch(e) {
     hideLoading()
-    const mt = { txHash:'0x'+Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: state.selectedExp?.priceUSD||100, currency:'USDC', status:'confirmed' }
-    addTxToFeed(mt); setStep(3); flashKitePanel(); setTimeout(() => startAutoPurchase(), 2500)
+    const amount2 = state.selectedExp?.priceUSD || 100
+    const mt = { txHash:'0x'+Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: amount2, currency:'USDC', status:'confirmed' }
+    addTxToFeed(mt); addSpent(amount2); setStep(3); flashKitePanel(); setTimeout(() => startAutoPurchase(), 2500)
   }
 }
 
@@ -1632,6 +1689,7 @@ function purchaseItemsSequentially(items, idx, onAllDone) {
     if (card) { card.classList.remove('purchasing'); card.classList.add('purchased') }
     if (statusEl) { statusEl.textContent = '✓ Purchased'; statusEl.className = 'item-status done' }
     addTxToFeed({ txHash:'0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: item.priceUSD, currency:'USDC', status:'auto-purchased' })
+    addSpent(item.priceUSD)
     showToast('Auto-purchased: ' + item.name)
     purchaseItemsSequentially(items, idx+1, onAllDone)
   }, 900 + idx * 400)
@@ -1674,22 +1732,7 @@ function flashKitePanel() {
   kp.style.transition = 'box-shadow 0.3s, border-color 0.3s'
   kp.style.boxShadow = '0 0 32px rgba(74,255,140,0.5)'
   kp.style.borderColor = 'rgba(74,255,140,0.6)'
-  // Show a floating toast near the Kite panel
-  showToast('⬡ Kite Passport — processing autonomously via x402')
-  setTimeout(() => {
-    kp.style.boxShadow = ''
-    kp.style.borderColor = ''
-  }, 3000)
-}
-
-// Flash Kite Passport panel to show it's actively processing
-function flashKitePanel() {
-  const kp = document.getElementById('kite-panel')
-  if (!kp) return
-  kp.style.transition = 'box-shadow 0.3s, border-color 0.3s'
-  kp.style.boxShadow = '0 0 32px rgba(74,255,140,0.5)'
-  kp.style.borderColor = 'rgba(74,255,140,0.6)'
-  showToast('⬡ Kite Passport — processing autonomously via x402')
+  showToast('⬡ Kite Passport — payment processed on-chain')
   setTimeout(() => { kp.style.boxShadow = ''; kp.style.borderColor = '' }, 3000)
 }
 
@@ -1829,6 +1872,7 @@ async function kiteWeatherPurchase() {
         'Travel weather data — ' + cityJa,
         '$0.01 USDC',
         'Kite x402 payment complete | TX: ' + (data.tx_hash||'').slice(0,14) + '… | ' + ts)
+      addSpent(0.01)
       showToast('✅ Kite x402 payment complete!')
     } else if (data.x402_attempted) {
       // x402フロー実行済み（残高不足）
@@ -1893,6 +1937,18 @@ function kiteUpdateTxLog(id, icon, label, amount, meta) {
 // BUDGET MODAL
 // ============================================
 let budgetState = { amount: 0, currency: 'USD' }
+let spentTotal = 0  // running total of all payments (experience + auto-purchase + weather)
+function addSpent(usd) {
+  spentTotal += usd
+  // Header spent bar — show once spending starts
+  const spentBar = document.getElementById('spent-bar')
+  if (spentBar) spentBar.style.display = 'flex'
+  const el = document.getElementById('spent-total-display')
+  if (el) el.textContent = '$' + spentTotal.toFixed(2)
+  // Kite panel spent counter
+  const el2 = document.getElementById('kite-spent-display')
+  if (el2) el2.textContent = spentTotal.toFixed(2) + ' USDC'
+}
 
 function selectBudgetPreset(btn) {
   document.querySelectorAll('.budget-preset-btn').forEach(b => b.classList.remove('selected'))
@@ -1913,15 +1969,21 @@ function submitBudget() {
   if (val <= 0) { showToast('Please enter your budget'); return }
   budgetState.amount = val
   closeBudgetModal()
-  // チャットに反映
-  addMessage('user', \`My travel budget is $\${val} USD\`)
-  const reply = \`Oh-ho, perfect! $\${val} — that opens up some truly wonderful possibilities. Kite Passport is configured and ready. Now, tell me — what kind of Japan experience are you dreaming of? A hidden onsen deep in the mountains? Ancient forest trekking? Or perhaps a private irori dining experience?\`
+  // Update Agent Rules panel budget display
+  const ruleEl = document.getElementById('rule-budget-display')
+  if (ruleEl) ruleEl.textContent = '$' + val + ' USD'
+  // Update Kite panel limits
+  const limits = document.querySelectorAll('.kite-limit')
+  if (limits.length >= 2) limits[1].textContent = 'Budget cap: $' + val
+  // Update budget cap display in header area
+  const capEl = document.getElementById('budget-cap-display')
+  if (capEl) capEl.textContent = '$' + val
+  // Chat reply with guide
+  addMessage('user', \`My travel budget cap is $\${val} USD per transaction\`)
+  const reply = \`Oh-ho, perfect! A $\${val} cap per transaction — Kite Passport is now configured and ready. Experiences within $\${val} will be booked automatically with no approval needed! Now, who will you be traveling with? And do you prefer nature and solitude, or culture and gourmet dining?\`
   addMessage('assistant', reply)
   speak(reply)
-  // Kiteパネルの上限表示を更新
-  const limits = document.querySelectorAll('.kite-limit')
-  if (limits.length >= 2) limits[1].textContent = \`Budget: $\${val}\`
-  showToast(\`✓ Budget set: $\${val} USD\`)
+  showToast(\`✓ Budget cap set: $\${val} USD\`)
 }
 
 // ============================================
@@ -2008,6 +2070,7 @@ async function runA2ASimulation() {
   btn.disabled = false
   const nextM = A2A_MERCHANTS[a2aCurrentMerchant % A2A_MERCHANTS.length]
   btn.textContent = '↺ Next Host: ' + nextM.short
+  addSpent(m.total + m.itemTotal)
   showToast('✓ A2A done! [' + m.short + '] — $' + (m.total + m.itemTotal) + ' USDC paid autonomously')
   // Update Kite Passport panel — reflect completed payment
   const kiteBadge2 = document.getElementById('kite-session-badge')
