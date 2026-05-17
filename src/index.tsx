@@ -27,12 +27,14 @@ const ZUKKU_SYSTEM_PROMPT = `You are ZUKKU, a small owl-shaped robot developed b
 - Large expenses require approval. ZUKKU auto-purchases small essentials within budget.
 
 [DIALOGUE RULES]
-1. Gently draw out travel wishes (when, with whom, mood, budget)
-2. Suggest hidden retreats & experiences >> "search_ryokan"
-3. Booking & payment >> "show_authorize"
-4. Wallet connect >> "connect_wallet"
-5. Rule settings >> "open_rules"
-6. Keep replies under 200 chars. Append [ACTION:xxx] if needed.
+1. Budget is already set via the modal — do NOT ask about budget again.
+2. ALWAYS ask at least 2 preference questions before suggesting (e.g. "Who are you traveling with?", "Do you prefer nature or culture?", "Any must-have — onsen, gourmet, adventure?")
+3. Only trigger search_ryokan AFTER you have gathered travel mood/preference.
+4. Suggest hidden retreats & experiences >> "search_ryokan"
+5. Booking & payment >> "show_authorize"
+6. Wallet connect >> "connect_wallet"
+7. Rule settings >> "open_rules"
+8. Keep replies under 200 chars. Append [ACTION:xxx] if needed.
 
 [ZUKKU EXPRESSIONS]
 - "Oh-ho, what a wonderful request!"
@@ -1414,7 +1416,7 @@ function localFallback(msg) {
   if (m.includes('wallet') || m.includes('connect') || m.includes('ウォレット') || m.includes('接続')) return { text: 'My tummy button just lit up! Connecting your wallet right now.', action: 'connect_wallet' }
   if (m.includes('book') || m.includes('approve') || m.includes('reserve') || m.includes('予約') || m.includes('承認')) return { text: 'Understood. Your approval is all it takes — ZUKKU will handle everything from there.', action: 'show_authorize' }
   if (m.includes('rules') || m.includes('settings') || m.includes('limit') || m.includes('ルール') || m.includes('設定')) return { text: 'Opening your agent rule settings.', action: 'open_rules' }
-  return { text: "Interesting! What kind of experience are you after? Onsen, nature, local cuisine — ZUKKU's got you covered.", action: null }
+  return { text: "I'd love to find the perfect match for you! Tell me a little more — are you drawn to nature and solitude, cultural immersion, or perhaps a luxurious onsen escape? And will you be traveling solo or with someone special?", action: null }
 }
 function addChatMsg(role, text) {
   const hist = document.getElementById('chat-history')
@@ -1559,13 +1561,15 @@ async function authorizePayment() {
     const amount = state.selectedExp?.priceUSD || 100
     const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount, currency:'USDC', description: state.selectedExp?.name||'体験予約' }) })
     const pd = await pr.json(); hideLoading(); addTxToFeed(pd)
-    speak('Payment confirmed! ZUKKU is now auto-arranging the essential items for your trip.')
+    speak('Payment confirmed via Kite Passport! Now, within your approved budget cap, ZUKKU will auto-arrange the essential travel items for your trip — such as transport passes and guides. You can see each transaction in real time below.')
     setStep(3)
-    setTimeout(() => startAutoPurchase(), 1500)
+    // Show Kite badge prominently before auto-purchase
+    flashKitePanel()
+    setTimeout(() => startAutoPurchase(), 2500)
   } catch(e) {
     hideLoading()
     const mt = { txHash:'0x'+Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: state.selectedExp?.priceUSD||100, currency:'USDC', status:'confirmed' }
-    addTxToFeed(mt); setStep(3); setTimeout(() => startAutoPurchase(), 1500)
+    addTxToFeed(mt); setStep(3); flashKitePanel(); setTimeout(() => startAutoPurchase(), 2500)
   }
 }
 
@@ -1573,7 +1577,7 @@ async function authorizePayment() {
 async function startAutoPurchase() {
   if (!state.selectedExp) { showBookingComplete({ bookingId:'FLT-'+Date.now().toString(36).toUpperCase(), agentSummary:'ZUKKU has completed all arrangements for your journey.' }); return }
   showStatus('ZUKKU is auto-purchasing the essential items...')
-  speak('Thank you! Following your rules, ZUKKU is now auto-purchasing everything you need for the experience.')
+  speak('ZUKKU is now handling each item autonomously via Kite Passport — all within the cap you set. Each transaction appears in the feed below as it completes.')
   try {
     const res = await fetch('/api/auto-suggest', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ experienceId: state.selectedExp.id }) })
     const data = await res.json()
@@ -1661,6 +1665,32 @@ async function approvePendingItem(id, priceUSD, name) {
   if (statusEl) { statusEl.textContent = '✓ Approved'; statusEl.className = 'item-status done' }
   addTxToFeed({ txHash:'0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount:priceUSD, currency:'USDC', status:'approved' })
   showToast('✓ Purchased: ' + name)
+}
+
+// Flash Kite Passport panel to show it's actively processing
+function flashKitePanel() {
+  const kp = document.getElementById('kite-panel')
+  if (!kp) return
+  kp.style.transition = 'box-shadow 0.3s, border-color 0.3s'
+  kp.style.boxShadow = '0 0 32px rgba(74,255,140,0.5)'
+  kp.style.borderColor = 'rgba(74,255,140,0.6)'
+  // Show a floating toast near the Kite panel
+  showToast('⬡ Kite Passport — processing autonomously via x402')
+  setTimeout(() => {
+    kp.style.boxShadow = ''
+    kp.style.borderColor = ''
+  }, 3000)
+}
+
+// Flash Kite Passport panel to show it's actively processing
+function flashKitePanel() {
+  const kp = document.getElementById('kite-panel')
+  if (!kp) return
+  kp.style.transition = 'box-shadow 0.3s, border-color 0.3s'
+  kp.style.boxShadow = '0 0 32px rgba(74,255,140,0.5)'
+  kp.style.borderColor = 'rgba(74,255,140,0.6)'
+  showToast('⬡ Kite Passport — processing autonomously via x402')
+  setTimeout(() => { kp.style.boxShadow = ''; kp.style.borderColor = '' }, 3000)
 }
 
 function finalizeBooking() {
@@ -1885,7 +1915,7 @@ function submitBudget() {
   closeBudgetModal()
   // チャットに反映
   addMessage('user', \`My travel budget is $\${val} USD\`)
-  const reply = \`Oh-ho, perfect! With a $\${val} budget, ZUKKU will find the ideal experience for you. Kite Passport session is all set — I'm ready to handle everything within that limit. What kind of trip are you dreaming of?\`
+  const reply = \`Oh-ho, perfect! $\${val} — that opens up some truly wonderful possibilities. Kite Passport is configured and ready. Now, tell me — what kind of Japan experience are you dreaming of? A hidden onsen deep in the mountains? Ancient forest trekking? Or perhaps a private irori dining experience?\`
   addMessage('assistant', reply)
   speak(reply)
   // Kiteパネルの上限表示を更新
