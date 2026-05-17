@@ -516,6 +516,13 @@ app.get('/', (c) => {
     .quick-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
     .quick-action-btn { background: transparent; border: 1px solid var(--border); color: var(--white-dim); padding: 6px 14px; font-family: 'Noto Sans JP', sans-serif; font-weight: 200; font-size: 11px; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; border-radius: 18px; }
     .quick-action-btn:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+    /* TEXT INPUT ROW */
+    .text-input-row { display: flex; gap: 8px; max-width: 540px; width: 100%; margin-top: 12px; }
+    .text-input-field { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--white); padding: 10px 16px; font-family: 'Noto Sans JP', sans-serif; font-weight: 200; font-size: 13px; border-radius: 24px; outline: none; transition: border-color 0.3s; }
+    .text-input-field::placeholder { color: var(--white-dim); }
+    .text-input-field:focus { border-color: var(--gold-dim); }
+    .text-send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); border: none; color: #000; font-size: 16px; cursor: pointer; flex-shrink: 0; transition: all 0.3s; align-self: center; }
+    .text-send-btn:hover { box-shadow: 0 0 16px rgba(201,168,76,0.4); transform: translateY(-1px); }
 
     /* CHAT HISTORY */
     #chat-history { max-width: 620px; margin: 0 auto 16px; width: 100%; max-height: 180px; overflow-y: auto; padding: 0 36px; display: none; }
@@ -888,8 +895,8 @@ app.get('/', (c) => {
     </div>
   </header>
 
-  <!-- DEMO FLOW STEPS -->
-  <div class="demo-steps">
+  <!-- DEMO FLOW STEPS — hidden from end users -->
+  <div class="demo-steps" style="display:none">
     <div class="demo-step active" id="step1">
       <div class="step-num">1</div>
       <div class="step-label">AI Suggests<br>Experiences</div>
@@ -952,6 +959,14 @@ app.get('/', (c) => {
         <button class="quick-action-btn" onclick="sendQuickAction('Suggest food and cultural experiences')">🍶 Food & Culture</button>
         <button class="quick-action-btn" onclick="openAgentRules()">⚙ Agent Rules</button>
       </div>
+    </div>
+
+    <!-- TEXT INPUT (fallback for voice) -->
+    <div class="text-input-row" id="text-input-row">
+      <input type="text" id="text-input" class="text-input-field"
+             placeholder="Type your message to ZUKKU..."
+             onkeydown="if(event.key==='Enter')sendTextMessage()" />
+      <button class="text-send-btn" onclick="sendTextMessage()">↑</button>
     </div>
   </section>
 
@@ -1186,9 +1201,12 @@ app.get('/', (c) => {
       <div class="budget-zukku-row">
         <div class="budget-zukku-icon">🦉</div>
         <div class="budget-zukku-speech">
-          Oh-ho, welcome! 🦉<br>
-          Let's start with your travel budget.<br>
-          ZUKKU will configure Kite Passport and handle everything within that limit.
+          <strong style="font-size:14px;color:var(--gold)">Set Your Session Budget</strong><br>
+          <span style="font-size:11px;color:var(--white-dim)">
+            This is the <strong style="color:var(--white)">maximum spend per single transaction</strong> that ZUKKU can approve autonomously.<br>
+            Anything above this limit will require your explicit approval.<br>
+            <span style="color:rgba(74,255,140,0.7)">⬡ Kite Passport session will be configured with these limits.</span>
+          </span>
         </div>
       </div>
       <div class="budget-presets">
@@ -1204,9 +1222,15 @@ app.get('/', (c) => {
         <span class="budget-unit">USD</span>
       </div>
       <div class="budget-session-info">
-        ⬡ Kite Passport Session Config<br>
-        Total limit: your budget / Per-tx cap: $50 / Valid for: 24h<br>
-        <span style="color:rgba(74,255,140,0.6)">Small purchases are handled automatically. Larger experiences require your approval.</span>
+        ⬡ <strong>Kite Passport Session Config</strong><br>
+        <span style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
+          <span>🔒 Per-tx cap: <strong style="color:var(--white)">your amount above</strong></span>
+          <span>⏱ Valid: <strong style="color:var(--white)">24 hours</strong></span>
+        </span>
+        <span style="color:rgba(74,255,140,0.6);display:block;margin-top:4px">
+          ✓ Purchases within the cap are handled automatically<br>
+          ✓ Anything above the cap requires your explicit approval
+        </span>
       </div>
       <button class="budget-submit-btn" onclick="submitBudget()">
         Set Budget & Start →
@@ -1341,6 +1365,16 @@ function stopListening() {
 }
 function sendQuickAction(text) { document.getElementById('user-transcript').textContent = '「 ' + text + ' 」'; sendToZukku(text) }
 
+// ===== TEXT INPUT =====
+function sendTextMessage() {
+  const input = document.getElementById('text-input')
+  const text = input.value.trim()
+  if (!text) return
+  input.value = ''
+  document.getElementById('user-transcript').textContent = '「 ' + text + ' 」'
+  sendToZukku(text)
+}
+
 // ===== CORE: Send to ZUKKU =====
 async function sendToZukku(message) {
   if (!message.trim()) return
@@ -1462,23 +1496,35 @@ function renderExperiences(exps) {
 }
 
 // ===== STEP 2: SELECT & AUTHORIZE =====
+let _selectExpLock = false
 async function selectExperience(id) {
+  if (_selectExpLock) return   // prevent double-tap
+  _selectExpLock = true
   document.querySelectorAll('.exp-card').forEach(c => { c.classList.remove('selected'); c.style.opacity = c.id === 'exp-'+id ? '1' : '0.5' })
   document.getElementById('exp-'+id).classList.add('selected')
   // Find exp data from rendered cards
   const res = await fetch('/api/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nights:2,guests:2}) }).then(r=>r.json()).catch(()=>null)
   const exp = res?.experiences?.find(e => e.id === id)
-  if (!exp) return
+  if (!exp) { _selectExpLock = false; return }
   state.selectedExp = exp
   speak('Great choice! Please give your approval and ZUKKU will confirm the booking instantly.', () => {
     showAuthorizeForExp(exp)
+    setTimeout(() => { _selectExpLock = false }, 2000)
   })
 }
 
 function showAuthorizeForExp(exp) {
   if (!state.walletConnected) { speak('Please connect your wallet first.'); connectWallet(); return }
   document.getElementById('authorize-amount-display').innerHTML = '$' + exp.priceUSD + '<span>USD</span>'
-  document.getElementById('authorize-desc').innerHTML = \`Booking: "\${exp.name}"<br>Your approval is all it takes — ZUKKU will confirm everything instantly.<br>Related items will be auto-purchased within your rules.\`
+  const capAmt = budgetState.amount || 50
+  document.getElementById('authorize-desc').innerHTML = \`
+    <strong style="color:var(--white)">\${exp.name}</strong><br>
+    <span style="color:rgba(201,168,76,0.8)">⬡ Kite Passport</span> will process this payment via x402 protocol.<br>
+    <span style="font-size:11px;color:var(--white-dim)">
+      Per-tx cap: <strong style="color:var(--white)">$\${capAmt} USD</strong> &nbsp;|&nbsp;
+      Session valid: <strong style="color:var(--white)">24h</strong><br>
+      Related travel essentials within your cap will be auto-purchased after approval.
+    </span>\`
   document.getElementById('authorize-section').classList.add('visible')
   setStep(2)
   setTimeout(() => document.getElementById('authorize-section').scrollIntoView({ behavior:'smooth', block:'start' }), 300)
@@ -1624,6 +1670,16 @@ function finalizeBooking() {
       bookingId: 'FLT-' + Date.now().toString(36).toUpperCase(),
       agentSummary: 'Your experience and all essential items are booked. Sit back and let ZUKKU handle the rest. Have an unforgettable journey!'
     })
+    // Sync Kite Passport panel — mark session as complete
+    const kiteBadge = document.getElementById('kite-session-badge')
+    if (kiteBadge) { kiteBadge.textContent = '✓ Payment Complete'; kiteBadge.style.color = 'rgba(74,255,140,0.9)' }
+    const kiteSessionId = document.getElementById('kite-session-id')
+    if (kiteSessionId) kiteSessionId.textContent = 'tx_' + Date.now().toString(36)
+    const kiteBalance = document.getElementById('kite-balance')
+    if (kiteBalance && state.selectedExp) {
+      kiteBalance.textContent = state.selectedExp.priceUSD + ' USDC (paid)'
+      kiteBalance.style.color = 'rgba(74,255,140,0.8)'
+    }
   }, 1800)
 }
 
@@ -1901,6 +1957,9 @@ function buildA2ASteps(m) {
 }
 
 async function runA2ASimulation() {
+  // Sync with Kite Passport panel visually
+  const kiteBadge = document.getElementById('kite-session-badge')
+  if (kiteBadge) { kiteBadge.textContent = '● Processing A2A...'; kiteBadge.style.color = '#FFD700' }
   const btn = document.getElementById('a2a-simulate-btn')
   const log = document.getElementById('a2a-log')
   btn.disabled = true
@@ -1920,6 +1979,17 @@ async function runA2ASimulation() {
   const nextM = A2A_MERCHANTS[a2aCurrentMerchant % A2A_MERCHANTS.length]
   btn.textContent = '↺ Next Host: ' + nextM.short
   showToast('✓ A2A done! [' + m.short + '] — $' + (m.total + m.itemTotal) + ' USDC paid autonomously')
+  // Update Kite Passport panel — reflect completed payment
+  const kiteBadge2 = document.getElementById('kite-session-badge')
+  if (kiteBadge2) { kiteBadge2.textContent = '● Session Active'; kiteBadge2.style.color = '' }
+  const kiteBalance = document.getElementById('kite-balance')
+  if (kiteBalance) {
+    const prev = parseFloat(kiteBalance.textContent) || 0
+    kiteBalance.textContent = (prev + m.total + m.itemTotal).toFixed(2) + ' USDC (paid)'
+    kiteBalance.style.color = 'rgba(74,255,140,0.8)'
+  }
+  const kiteSessionId = document.getElementById('kite-session-id')
+  if (kiteSessionId) kiteSessionId.textContent = 'a2a_tx_' + Date.now().toString(36)
 }
 
 // メインTXフィード（トランザクションに購入内容の文字情報を表示）
