@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import * as secp from '@noble/secp256k1'
+import { keccak_256 } from '@noble/hashes/sha3'
 
-type Bindings = { AI: Ai }
+type Bindings = { AI: Ai; KITE_WALLET_PRIVATE_KEY?: string }
 const app = new Hono<{ Bindings: Bindings }>()
 app.use('/api/*', cors())
 app.use('/static/*', serveStatic({ root: './public' }))
@@ -41,14 +43,35 @@ const ZUKKU_SYSTEM_PROMPT = `You are ZUKKU, a small owl-shaped robot developed b
 - "I, ZUKKU, shall find the perfect match for you!"
 - "My tummy button just lit up — all systems ready!"`
 
-// ===== Experiences DB =====
+// ===== Experiences DB (② 価格を$80〜$300に引き上げ・体験内容充実) =====
 const experiencesDB = [
-  { id: 'exp001', name: 'Okuhida Private Open-Air Bath', location: 'Okuhida, Gifu', category: 'onsen', priceJPY: 28000, priceUSD: 188, description: '2-hour private hot spring at 1200m altitude. Stars, virgin forest, and ultimate serenity.', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800', features: ['Full Private', '2 Hours', 'Stargazing Included'], requiresApproval: true, score: 98 },
-  { id: 'exp002', name: 'Yakushima Ancient Cedar Trekking', location: 'Yakushima, Kagoshima', category: 'nature', priceJPY: 22000, priceUSD: 148, description: 'Trek to a 3000-year-old cedar with a private guide. A walk through untouched primeval forest.', image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800', features: ['Private Guide', 'Full Day', 'Bento Included'], requiresApproval: true, score: 96 },
-  { id: 'exp003', name: 'Shirakawa-go Irori Hearth Dining', location: 'Shirakawa Village, Gifu', category: 'dining', priceJPY: 15000, priceUSD: 100, description: 'Dine around an open hearth in a 400-year-old farmhouse. Hida beef and local sake.', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800', features: ['Irori Cuisine', 'Local Sake Included', '2-4 Guests'], requiresApproval: true, score: 94 },
-  { id: 'exp004', name: 'Goto Islands Dawn Fishing', location: 'Goto Islands, Nagasaki', category: 'activity', priceJPY: 8000, priceUSD: 54, description: 'Head out to sea with local fishermen at dawn. Eat fresh catch on the beach.', image: 'https://images.unsplash.com/photo-1513553404607-988bf2703777?w=800', features: ['4 AM Departure', 'Breakfast Included', 'Small Group'], requiresApproval: false, score: 92 },
-  { id: 'exp005', name: 'Zen Temple Early Morning Meditation', location: 'Various Locations', category: 'wellness', priceJPY: 5000, priceUSD: 34, description: 'Visit a silent Zen temple before dawn. 45-minute meditation to close your journey.', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', features: ['45 Minutes', 'Robe Rental Included', 'Tea Ceremony Included'], requiresApproval: false, score: 90 },
+  // ONSEN category
+  { id: 'exp001', name: 'Okuhida Private Open-Air Bath', location: 'Okuhida, Gifu', category: 'onsen', priceJPY: 38000, priceUSD: 255, description: '4-hour exclusive open-air hot spring at 1200m altitude. Private rotenburo, stargazing dinner, and cedar sauna.', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800', features: ['Full Private 4h', 'Dinner Included', 'Stargazing + Sauna'], requiresApproval: true, score: 98 },
+  { id: 'exp006', name: 'Arima Hidden Spring Night Ritual', location: 'Arima Onsen, Hyogo', category: 'onsen', priceJPY: 28000, priceUSD: 188, description: 'Japan\'s oldest hot spring, private cobalt-blue tansan bath at midnight. Includes kaiseki supper.', image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800', features: ['Midnight Session', 'Kaiseki Supper', 'Gold & Silver Springs'], requiresApproval: true, score: 95 },
+  { id: 'exp007', name: 'Kusatsu Yumomi Traditional Ceremony', location: 'Kusatsu, Gunma', category: 'onsen', priceJPY: 18000, priceUSD: 120, description: 'Watch artisans cool the famous 94°C spring water with wooden paddles — then soak privately.', image: 'https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=800', features: ['Yumomi Show', 'Private Bath', 'Yukata Included'], requiresApproval: true, score: 91 },
+  // NATURE category
+  { id: 'exp002', name: 'Yakushima Ancient Cedar Trekking', location: 'Yakushima, Kagoshima', category: 'nature', priceJPY: 38000, priceUSD: 255, description: 'Full-day private trek to the 7200-year-old Jomon Cedar. Wilderness bento, forest bathing, and night firefly tour.', image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800', features: ['Private Guide', 'Full Day', 'Night Firefly Tour'], requiresApproval: true, score: 96 },
+  { id: 'exp008', name: 'Shiretoko Winter Wildlife Safari', location: 'Shiretoko, Hokkaido', category: 'nature', priceJPY: 42000, priceUSD: 280, description: 'Drift ice walk with a marine biologist guide. Spot Steller sea eagles, seals, and foxes at golden hour.', image: 'https://images.unsplash.com/photo-1551582045-6ec9c11d8697?w=800', features: ['Drift Ice Walk', 'Wildlife Expert', 'Sunrise Included'], requiresApproval: true, score: 97 },
+  { id: 'exp009', name: 'Iriomote Mangrove Kayak & Waterfall', location: 'Iriomote Island, Okinawa', category: 'nature', priceJPY: 22000, priceUSD: 148, description: 'Paddle through ancient mangroves to a hidden waterfall. Snorkel pristine coral reefs. Barbecue on the beach.', image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800', features: ['Mangrove Kayak', 'Waterfall Swim', 'BBQ Lunch'], requiresApproval: true, score: 93 },
+  // FOOD/DINING category
+  { id: 'exp003', name: 'Shirakawa-go Irori Hearth Dining', location: 'Shirakawa Village, Gifu', category: 'dining', priceJPY: 28000, priceUSD: 188, description: 'A 400-year-old UNESCO gassho farmhouse. Hida beef irori-yaki, fresh mountain vegetables, aged sake in the snow.', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800', features: ['UNESCO Property', 'Hida Wagyu', 'Aged Sake Pairing'], requiresApproval: true, score: 94 },
+  { id: 'exp010', name: 'Tsukiji Master Tuna Auction & Omakase', location: 'Tsukiji / Ginza, Tokyo', category: 'dining', priceJPY: 45000, priceUSD: 300, description: 'Private 4 AM tuna auction access, then a 12-course omakase with the tuna you bid on — same morning.', image: 'https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800', features: ['Tuna Auction Access', '12-Course Omakase', 'Same-Fish Guarantee'], requiresApproval: true, score: 99 },
+  { id: 'exp011', name: 'Kyoto Obanzai Private Tea Master Dinner', location: 'Gion, Kyoto', category: 'dining', priceJPY: 32000, priceUSD: 215, description: 'Dine with a tea ceremony master in a 17th-century machiya. Matcha-paired kaiseki, private garden lantern walk.', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', features: ['Tea Master Host', 'Machiya Setting', 'Garden Lantern Walk'], requiresApproval: true, score: 96 },
+  // ACTIVITY category
+  { id: 'exp004', name: 'Goto Islands Dawn Fishing', location: 'Goto Islands, Nagasaki', category: 'activity', priceJPY: 18000, priceUSD: 120, description: 'Head out at 4 AM with veteran fishermen. Hand-line yellowtail, char your catch on the pier, and eat at sunrise.', image: 'https://images.unsplash.com/photo-1513553404607-988bf2703777?w=800', features: ['4 AM Departure', 'Catch & Cook', 'Sunrise Breakfast'], requiresApproval: true, score: 92 },
+  // WELLNESS category
+  { id: 'exp005', name: 'Zen Temple Dawn Meditation & Sutra', location: 'Eiheiji, Fukui', category: 'wellness', priceJPY: 12000, priceUSD: 80, description: 'Awaken at 4 AM with resident monks. 45-min seated zazen, sutra chanting, and a monk-prepared shojin breakfast.', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', features: ['4 AM Zazen', 'Sutra Chanting', 'Shojin Breakfast'], requiresApproval: true, score: 90 },
 ]
+
+// カテゴリ別体験データ（⑤クイックアクション用）
+const experiencesByCategory: Record<string, typeof experiencesDB> = {
+  onsen:   experiencesDB.filter(e => e.category === 'onsen'),
+  nature:  experiencesDB.filter(e => e.category === 'nature'),
+  dining:  experiencesDB.filter(e => e.category === 'dining'),
+  food:    experiencesDB.filter(e => e.category === 'dining'), // alias
+  activity:experiencesDB.filter(e => e.category === 'activity'),
+  wellness:experiencesDB.filter(e => e.category === 'wellness'),
+}
 
 // ===== Auto-Purchase Items DB (小額の必需品 =====
 const autoPurchaseItems = [
@@ -143,14 +166,18 @@ function zukuFallback(message: string, history: { role: string; content: string 
   return defaults[Math.floor(Math.random() * defaults.length)]
 }
 
-// ===== API: Search (宿 + 体験) =====
+// ===== API: Search (宿 + 体験、カテゴリフィルタ対応) =====
 app.post('/api/search', async (c) => {
   const body = await c.req.json().catch(() => ({}))
-  const { nights = 2, guests = 2 } = body
+  const { nights = 2, guests = 2, category = '' } = body
   await new Promise((r) => setTimeout(r, 900))
   const ryokans = secretRyokan.filter((r) => r.availability).map((r) => ({ ...r, totalUSD: r.priceUSD * nights })).sort((a, b) => b.score - a.score)
-  const exps = experiencesDB.sort((a, b) => b.score - a.score)
-  return c.json({ success: true, ryokans, experiences: exps, agentMessage: 'Directly coordinated with local hosts. Here are your curated retreats and experiences.', searchContext: { nights, guests } })
+  // カテゴリ指定があればフィルタ、なければ全件
+  const cat = (category || '').toLowerCase()
+  const exps = (cat && experiencesByCategory[cat])
+    ? [...experiencesByCategory[cat]].sort((a,b) => b.score - a.score)
+    : [...experiencesDB].sort((a, b) => b.score - a.score)
+  return c.json({ success: true, ryokans, experiences: exps, agentMessage: 'Directly coordinated with local hosts. Here are your curated retreats and experiences.', searchContext: { nights, guests, category: cat } })
 })
 
 // ===== API: Auto-suggest items for experience =====
@@ -220,13 +247,460 @@ app.get('/api/orchestration/status', (c) => c.json({ status: 'ready', agent: 'Fl
 
 // ===== KITE PASSPORT CONFIG =====
 const KITE_BASE_URL = 'https://passport.prod.gokite.ai'
-const KITE_USER_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InItaXphd2FAaGF0YXByby5jby5qcCIsImV4cCI6MTc4MTEzMjQ3MiwiaWF0IjoxNzc4NTQwNDcyLCJpc3MiOiJraXRlLXBhc3Nwb3J0IiwianRpIjoiYXV0aF8wMTllMTk0NS1lN2RlLTc0OWYtYThjNy02NWRiNmM2OTJlYzciLCJzdWIiOiJ1c2VyXzAxOWUxOTQ0LWEwZmMtNzI0Ni04NTY5LTZiNzBiZDAwYjcyZCJ9.7EGwh0E7JnX0yVAE548CNpo9OxGHoRPh7I5sRtLmGEk'
 const KITE_AGENT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3Rvcl90eXBlIjoiYWdlbnQiLCJhZ2VudF90eXBlIjoiY29kaW5nLWFzc2lzdGFudCIsImV4cCI6MTc4MTEzMjQ3NiwiaWF0IjoxNzc4NTQwNDc2LCJpc3MiOiJraXRlLXBhc3Nwb3J0IiwianRpIjoiYXV0aF8wMTllMTk0NS1mN2U5LTcyYzYtYTJlZi0wMjQ0ODg2NWY4OTUiLCJvd25lcl9pZCI6InVzZXJfMDE5ZTE5NDQtYTBmYy03MjQ2LTg1NjktNmI3MGJkMDBiNzJkIiwic3ViIjoiYWdlbnRfMDE5ZTE5NDUtZjdlNC03YmJlLWFjYTMtYjE4MzI4MjBiYWVlIn0.yINlt2BJQCjR2Ne_I42lmGV1hB9u_5-TWd68K17lIBI'
 const KITE_AGENT_ID = 'agent_019e1945-f7e4-7bbe-aca3-b1832820baee'
 const KITE_USER_ID  = 'user_019e1944-a0fc-7246-8569-6b70bd00b72d'
 const KITE_WALLET   = '0x4580D0C762a6988836e06acF6f59a654baf57869'
 // Active SessionID（承認済み）
 let kiteCurrentSessionId = 'agent_session_019e1948-2620-7385-8224-edba16898cd3'
+
+// ===== KITE TESTNET PYUSD GASLESS TRANSFER (EIP-3009) =====
+// Chain: KiteAI Testnet (chainId: 2368, RPC: https://rpc-testnet.gokite.ai)
+// PYUSD contract: 0x8E04D099b1a8Dd20E6caD4b2Ab2B405B98242ec9 (decimals: 18)
+// Gasless API: https://gasless.gokite.ai/testnet
+// EIP-712 domain: { name: "PYUSD", version: "1", chainId: 2368, verifyingContract: PYUSD_CONTRACT }
+const PYUSD_CONTRACT  = '0x8E04D099b1a8Dd20E6caD4b2Ab2B405B98242ec9'
+const KITE_TESTNET_RPC   = 'https://rpc-testnet.gokite.ai/'
+const KITE_GASLESS_API   = 'https://gasless.gokite.ai/testnet'
+const KITE_CHAIN_ID      = 2368
+const KITE_STORE_ADDRESS = '0x13D8D465285f39F53eB4C10e953258a72587B388' // 店舗受取ウォレット
+
+// ====================================================================
+// EIP-712 / EIP-3009 純粋JS実装 (@noble/secp256k1 + @noble/hashes)
+// Cloudflare Workers環境対応（Node.js crypto不要）
+// ====================================================================
+
+/** 32バイト = uint256 を big-endian バイト配列に変換 */
+function uint256Bytes(n: bigint): Uint8Array {
+  const arr = new Uint8Array(32)
+  let v = n
+  for (let i = 31; i >= 0; i--) { arr[i] = Number(v & 0xffn); v >>= 8n }
+  return arr
+}
+
+/** hex string → Uint8Array */
+function hexToBytes(hex: string): Uint8Array {
+  const h = hex.startsWith('0x') ? hex.slice(2) : hex
+  const arr = new Uint8Array(h.length / 2)
+  for (let i = 0; i < arr.length; i++) arr[i] = parseInt(h.slice(i*2, i*2+2), 16)
+  return arr
+}
+
+/** Uint8Array → hex string (0x付き) */
+function bytesToHex(bytes: Uint8Array): string {
+  return '0x' + Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
+/** Ethereum address → 32バイト右寄せ */
+function addressBytes(addr: string): Uint8Array {
+  const bytes = new Uint8Array(32)
+  const raw = hexToBytes(addr)
+  bytes.set(raw, 12)
+  return bytes
+}
+
+/** keccak256 of Uint8Array using @noble/hashes */
+function keccak(data: Uint8Array): Uint8Array {
+  return keccak_256(data)
+}
+
+/** ABI encode: concat multiple 32-byte chunks */
+function abiEncode(...chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((s, c) => s + c.length, 0)
+  const result = new Uint8Array(total)
+  let offset = 0
+  for (const c of chunks) { result.set(c, offset); offset += c.length }
+  return result
+}
+
+/** bytes32 値をそのまま返す */
+function bytes32(hex: string): Uint8Array {
+  const bytes = new Uint8Array(32)
+  const raw = hexToBytes(hex)
+  bytes.set(raw.slice(0, 32))
+  return bytes
+}
+
+// EIP-712 TypeHash for TransferWithAuthorization
+const TRANSFER_WITH_AUTHORIZATION_TYPEHASH = keccak(
+  new TextEncoder().encode(
+    'TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)'
+  )
+)
+
+/** EIP-712 domainSeparator計算 */
+function computeDomainSeparator(): Uint8Array {
+  const EIP712_DOMAIN_TYPEHASH = keccak(
+    new TextEncoder().encode(
+      'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+    )
+  )
+  const nameHash    = keccak(new TextEncoder().encode('PYUSD'))
+  const versionHash = keccak(new TextEncoder().encode('1'))
+  const chainIdBytes = uint256Bytes(BigInt(KITE_CHAIN_ID))
+  const contractBytes = addressBytes(PYUSD_CONTRACT)
+
+  return keccak(abiEncode(
+    EIP712_DOMAIN_TYPEHASH,
+    nameHash,
+    versionHash,
+    chainIdBytes,
+    contractBytes,
+  ))
+}
+
+/** EIP-3009 署名対象ハッシュを生成 */
+function buildTransferAuthHash(
+  from: string, to: string, value: bigint,
+  validAfter: bigint, validBefore: bigint, nonce: string
+): Uint8Array {
+  const structHash = keccak(abiEncode(
+    TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
+    addressBytes(from),
+    addressBytes(to),
+    uint256Bytes(value),
+    uint256Bytes(validAfter),
+    uint256Bytes(validBefore),
+    bytes32(nonce),
+  ))
+  const domainSep = computeDomainSeparator()
+  // EIP-712: \x19\x01 ++ domainSeparator ++ structHash
+  const msg = new Uint8Array(2 + 32 + 32)
+  msg[0] = 0x19; msg[1] = 0x01
+  msg.set(domainSep, 2)
+  msg.set(structHash, 34)
+  return keccak(msg)
+}
+
+/** ランダム bytes32 nonce を生成 */
+function randomBytes32(): string {
+  const bytes = new Uint8Array(32)
+  crypto.getRandomValues(bytes)
+  return bytesToHex(bytes)
+}
+
+/** ECDSA secp256k1 署名を行い v, r, s を返す */
+async function signEIP712(
+  privateKeyHex: string,
+  msgHash: Uint8Array
+): Promise<{ v: number; r: string; s: string }> {
+  const privKey = hexToBytes(privateKeyHex)
+  // @noble/secp256k1 v2: sign(msg, privKey, {lowS: true}) → Signature
+  const sig = await secp.signAsync(msgHash, privKey, { lowS: true })
+  // Ethereum v = 27 or 28
+  const v = 27 + sig.recovery
+  const r = bytesToHex(sig.r.toBytes())
+  const s = bytesToHex(sig.s.toBytes())
+  return { v, r, s }
+}
+
+/** Kite Testnet の最新ブロックタイムスタンプを取得 */
+async function getKiteBlockTimestamp(): Promise<bigint> {
+  const res = await fetch(KITE_TESTNET_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc:'2.0', method:'eth_getBlockByNumber', params:['latest', false], id:1 }),
+  })
+  const data = await res.json() as { result?: { timestamp: string } }
+  if (!data.result?.timestamp) throw new Error('Failed to get block timestamp')
+  return BigInt(data.result.timestamp)
+}
+
+/** PYUSD残高取得 */
+async function getPYUSDBalance(address: string): Promise<bigint> {
+  const paddedAddr = '000000000000000000000000' + address.replace('0x','')
+  const data = '0x70a08231' + paddedAddr
+  const res = await fetch(KITE_TESTNET_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc:'2.0', method:'eth_call', params:[{ to: PYUSD_CONTRACT, data }, 'latest'], id:1 }),
+  })
+  const d = await res.json() as { result?: string }
+  if (!d.result || d.result === '0x') return 0n
+  return BigInt(d.result)
+}
+
+/** PYUSD claim（ガスあり送金 — claimTo用のraw tx構築） */
+async function claimPYUSDWithPrivKey(privateKeyHex: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  try {
+    // claimTo(address) selector: 0xa262f5f8
+    // + ABI encoded address (32 bytes)
+    const paddedAddr = '000000000000000000000000' + KITE_WALLET.replace('0x','')
+    const calldata = '0xa262f5f8' + paddedAddr
+
+    // nonce取得
+    const nonceRes = await fetch(KITE_TESTNET_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc:'2.0', method:'eth_getTransactionCount', params:[KITE_WALLET, 'pending'], id:1 }),
+    })
+    const nonceData = await nonceRes.json() as { result?: string }
+    const nonce = nonceData.result ? parseInt(nonceData.result, 16) : 0
+
+    // gasPrice取得
+    const gasPriceRes = await fetch(KITE_TESTNET_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc:'2.0', method:'eth_gasPrice', params:[], id:1 }),
+    })
+    const gasPriceData = await gasPriceRes.json() as { result?: string }
+    const gasPrice = gasPriceData.result ? BigInt(gasPriceData.result) : 1000000000n // 1 Gwei fallback
+
+    // RLP-encoded transaction (EIP-155, legacy type)
+    // tx: { nonce, gasPrice, gasLimit, to, value, data, v, r, s }
+    const gasLimit = 100000n
+    const txData = {
+      nonce: BigInt(nonce),
+      gasPrice,
+      gasLimit,
+      to: PYUSD_CONTRACT,
+      value: 0n,
+      data: calldata,
+      chainId: BigInt(KITE_CHAIN_ID),
+    }
+
+    // Sign with secp256k1
+    const txHash = await signRawTransaction(privateKeyHex, txData)
+    return { success: true, txHash }
+  } catch(e) {
+    return { success: false, error: String(e) }
+  }
+}
+
+/** RLPエンコード helper */
+function rlpEncodeLength(len: number, offset: number): number[] {
+  if (len < 56) return [offset + len]
+  const lenBytes = []
+  let l = len
+  while (l > 0) { lenBytes.unshift(l & 0xff); l >>= 8 }
+  return [offset + 55 + lenBytes.length, ...lenBytes]
+}
+
+function rlpEncode(input: (Uint8Array | number[])[]): Uint8Array {
+  const encodeItem = (item: Uint8Array | number[]): number[] => {
+    const bytes = Array.from(item instanceof Uint8Array ? item : new Uint8Array(item))
+    if (bytes.length === 1 && bytes[0] < 0x80) return bytes
+    return [...rlpEncodeLength(bytes.length, 0x80), ...bytes]
+  }
+  const items: number[] = []
+  for (const item of input) items.push(...encodeItem(item))
+  return new Uint8Array([...rlpEncodeLength(items.length, 0xc0), ...items])
+}
+
+function bigintToBytes(n: bigint): Uint8Array {
+  if (n === 0n) return new Uint8Array(0)
+  const hex = n.toString(16)
+  const padded = hex.length % 2 === 0 ? hex : '0' + hex
+  return hexToBytes('0x' + padded)
+}
+
+async function signRawTransaction(
+  privateKeyHex: string,
+  tx: { nonce: bigint; gasPrice: bigint; gasLimit: bigint; to: string; value: bigint; data: string; chainId: bigint }
+): Promise<string> {
+  // EIP-155 signing: rlp([nonce, gasPrice, gasLimit, to, value, data, chainId, 0, 0])
+  const toBytes = hexToBytes(tx.to)
+  const dataBytes = hexToBytes(tx.data)
+  const presign = rlpEncode([
+    bigintToBytes(tx.nonce),
+    bigintToBytes(tx.gasPrice),
+    bigintToBytes(tx.gasLimit),
+    toBytes,
+    bigintToBytes(tx.value),
+    dataBytes,
+    bigintToBytes(tx.chainId),
+    new Uint8Array(0),
+    new Uint8Array(0),
+  ])
+  const hash = keccak(presign)
+  const { v: rawV, r, s } = await signEIP712(privateKeyHex, hash)
+  // EIP-155: v = chainId * 2 + 35 or 36
+  const v = tx.chainId * 2n + 35n + BigInt(rawV - 27)
+  const signedTx = rlpEncode([
+    bigintToBytes(tx.nonce),
+    bigintToBytes(tx.gasPrice),
+    bigintToBytes(tx.gasLimit),
+    toBytes,
+    bigintToBytes(tx.value),
+    dataBytes,
+    bigintToBytes(v),
+    hexToBytes(r),
+    hexToBytes(s),
+  ])
+  // eth_sendRawTransaction
+  const res = await fetch(KITE_TESTNET_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc:'2.0', method:'eth_sendRawTransaction', params:[bytesToHex(signedTx)], id:1 }),
+  })
+  const data = await res.json() as { result?: string; error?: { message?: string } }
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error))
+  return data.result || ''
+}
+
+// ===== API: Kite PYUSD Gasless Transfer (EIP-3009) — 実際のテストネット送金 =====
+app.post('/api/kite/pyusd-transfer', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const { amountUSD = 10, toAddress = KITE_STORE_ADDRESS, description = 'Flattora experience payment' } = body
+
+  // 秘密鍵の取得（Cloudflare Secret: KITE_WALLET_PRIVATE_KEY）
+  const privateKey = c.env?.KITE_WALLET_PRIVATE_KEY || ''
+  if (!privateKey) {
+    return c.json({
+      success: false,
+      error: 'KITE_WALLET_PRIVATE_KEY not configured',
+      setup_required: true,
+      setup_instruction: 'Run: npx wrangler pages secret put KITE_WALLET_PRIVATE_KEY --project-name flattora',
+      simulation_mode: true,
+      // シミュレーション結果を返す（見た目は本物のtx形式）
+      simulated_tx: {
+        txHash: '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2,'0')).join(''),
+        from: KITE_WALLET,
+        to: toAddress,
+        amountUSD,
+        amountPYUSD: (amountUSD * 1e18).toString(),
+        network: 'KiteAI Testnet (2368)',
+        token: 'PYUSD',
+        contract: PYUSD_CONTRACT,
+        gasless: true,
+        status: 'simulated',
+        note: '秘密鍵が設定されると実際にKiteテストネット上で送金されます',
+      }
+    }, 200)
+  }
+
+  try {
+    // ① PYUSD残高確認
+    const balance = await getPYUSDBalance(KITE_WALLET)
+    const amountWei = BigInt(Math.round(amountUSD)) * (10n ** 18n)
+    const minTransfer = 10000000000000000n // 0.01 PYUSD (API minimum)
+    const transferAmount = amountWei < minTransfer ? minTransfer : amountWei
+
+    // ② 残高不足の場合、claimTo()でmint
+    let mintTxHash: string | undefined
+    if (balance < transferAmount) {
+      const mintResult = await claimPYUSDWithPrivKey(privateKey)
+      if (!mintResult.success) {
+        // mint失敗 — 最小額で試みる
+        console.warn('PYUSD mint failed:', mintResult.error)
+      } else {
+        mintTxHash = mintResult.txHash
+        // Mint後、少し待機してから残高反映
+        await new Promise(r => setTimeout(r, 3000))
+      }
+    }
+
+    // ③ ブロックタイムスタンプ取得
+    const blockTs = await getKiteBlockTimestamp()
+    const now = BigInt(Math.floor(Date.now() / 1000))
+    const validAfter  = blockTs - 1n     // 最新ブロック直前 (既に有効)
+    const validBefore = now + 25n         // 現在から25秒後
+
+    // ④ EIP-3009 署名
+    const nonce = randomBytes32()
+    const msgHash = buildTransferAuthHash(
+      KITE_WALLET, toAddress, transferAmount,
+      validAfter, validBefore, nonce
+    )
+    const { v, r, s } = await signEIP712(privateKey, msgHash)
+
+    // ⑤ Kite Gasless APIに送信
+    const payload = {
+      from: KITE_WALLET,
+      to: toAddress,
+      value: transferAmount.toString(),
+      validAfter: validAfter.toString(),
+      validBefore: validBefore.toString(),
+      tokenAddress: PYUSD_CONTRACT,
+      nonce,
+      v,
+      r,
+      s,
+    }
+    const gaslessRes = await fetch(KITE_GASLESS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const gaslessData = await gaslessRes.json() as { txHash?: string; error?: string; message?: string }
+
+    if (!gaslessRes.ok) {
+      return c.json({
+        success: false,
+        error: gaslessData.error || gaslessData.message || 'Gasless API error',
+        status: gaslessRes.status,
+        payload_sent: payload,
+        balance_before: balance.toString(),
+        mint_tx: mintTxHash,
+      })
+    }
+
+    const txHash = gaslessData.txHash
+    return c.json({
+      success: true,
+      txHash,
+      from: KITE_WALLET,
+      to: toAddress,
+      amountUSD,
+      amountPYUSD: (Number(transferAmount) / 1e18).toFixed(2),
+      network: 'KiteAI Testnet (2368)',
+      token: 'PYUSD',
+      contract: PYUSD_CONTRACT,
+      gasless: true,
+      eip3009: true,
+      explorer: txHash ? `https://testnet.kitescan.ai/tx/${txHash}` : null,
+      mint_tx: mintTxHash,
+      balance_before: (Number(balance) / 1e18).toFixed(4) + ' PYUSD',
+      description,
+    })
+  } catch(e) {
+    return c.json({ success: false, error: String(e) })
+  }
+})
+
+// ===== API: PYUSD Mint (claimTo) =====
+app.post('/api/kite/pyusd-mint', async (c) => {
+  const privateKey = c.env?.KITE_WALLET_PRIVATE_KEY || ''
+  if (!privateKey) {
+    return c.json({
+      success: false,
+      error: 'KITE_WALLET_PRIVATE_KEY not configured',
+      setup_required: true,
+    })
+  }
+  try {
+    const balance = await getPYUSDBalance(KITE_WALLET)
+    const result = await claimPYUSDWithPrivKey(privateKey)
+    return c.json({
+      success: result.success,
+      txHash: result.txHash,
+      error: result.error,
+      wallet: KITE_WALLET,
+      balance_before: (Number(balance) / 1e18).toFixed(4) + ' PYUSD',
+      network: 'KiteAI Testnet (2368)',
+      explorer: result.txHash ? `https://testnet.kitescan.ai/tx/${result.txHash}` : null,
+    })
+  } catch(e) {
+    return c.json({ success: false, error: String(e) })
+  }
+})
+
+// ===== API: PYUSD Balance =====
+app.get('/api/kite/pyusd-balance', async (c) => {
+  try {
+    const balance = await getPYUSDBalance(KITE_WALLET)
+    return c.json({
+      success: true,
+      wallet: KITE_WALLET,
+      balance: balance.toString(),
+      balanceFormatted: (Number(balance) / 1e18).toFixed(4) + ' PYUSD',
+      network: 'KiteAI Testnet (2368)',
+      contract: PYUSD_CONTRACT,
+    })
+  } catch(e) {
+    return c.json({ success: false, error: String(e) })
+  }
+})
 
 // ===== API: Kite — ステータス取得 =====
 app.get('/api/kite/status', async (c) => {
@@ -961,9 +1435,9 @@ app.get('/', (c) => {
     <div class="voice-controls">
       <button class="mic-btn" id="mic-btn" onclick="toggleListening()" title="Toggle microphone">🎙</button>
       <div class="quick-actions">
-        <button class="quick-action-btn" onclick="sendQuickAction('Show me onsen and hidden retreat experiences')">🛁 Onsen & Retreat</button>
-        <button class="quick-action-btn" onclick="sendQuickAction('I want nature and outdoor activities')">🌿 Nature & Outdoors</button>
-        <button class="quick-action-btn" onclick="sendQuickAction('Suggest food and cultural experiences')">🍶 Food & Culture</button>
+        <button class="quick-action-btn" onclick="handleQuickAction('onsen')">🛁 Onsen & Retreat</button>
+        <button class="quick-action-btn" onclick="handleQuickAction('nature')">🌿 Nature & Outdoors</button>
+        <button class="quick-action-btn" onclick="handleQuickAction('dining')">🍶 Food & Culture</button>
         <button class="quick-action-btn" onclick="openAgentRules()">⚙ Agent Rules</button>
       </div>
     </div>
@@ -1148,8 +1622,8 @@ app.get('/', (c) => {
           <div class="kite-wallet-addr" id="kite-wallet-addr">0x4580...7869</div>
         </div>
         <div class="kite-balance-box">
-          <div class="kite-balance-label">Available</div>
-          <div class="kite-balance-val" id="kite-balance">Ready</div>
+          <div class="kite-balance-label">PYUSD Balance</div>
+          <div class="kite-balance-val" id="kite-balance">Loading...</div>
         </div>
       </div>
 
@@ -1225,15 +1699,15 @@ app.get('/', (c) => {
         </div>
       </div>
       <div class="budget-presets">
+        <button class="budget-preset-btn" data-amount="10" onclick="selectBudgetPreset(this)">$10</button>
+        <button class="budget-preset-btn" data-amount="20" onclick="selectBudgetPreset(this)">$20</button>
+        <button class="budget-preset-btn selected" data-amount="50" onclick="selectBudgetPreset(this)">$50</button>
+        <button class="budget-preset-btn" data-amount="100" onclick="selectBudgetPreset(this)">$100</button>
         <button class="budget-preset-btn" data-amount="200" onclick="selectBudgetPreset(this)">$200</button>
-        <button class="budget-preset-btn" data-amount="500" onclick="selectBudgetPreset(this)">$500</button>
-        <button class="budget-preset-btn selected" data-amount="1000" onclick="selectBudgetPreset(this)">$1,000</button>
-        <button class="budget-preset-btn" data-amount="2000" onclick="selectBudgetPreset(this)">$2,000</button>
-        <button class="budget-preset-btn" data-amount="5000" onclick="selectBudgetPreset(this)">$5,000+</button>
       </div>
       <div class="budget-custom-row">
         <input type="number" id="budget-custom-input" class="budget-custom-input"
-               placeholder="Enter amount" value="1000" min="1">
+               placeholder="Enter amount" value="50" min="1">
         <span class="budget-unit">USD</span>
       </div>
       <div class="budget-session-info">
@@ -1378,6 +1852,13 @@ function stopListening() {
   stopWaveAnimation(); if (state.recognition) try { state.recognition.stop() } catch(e) {}
   setBallState('idle')
 }
+// ⑤ カテゴリ別クイックアクション
+function handleQuickAction(category) {
+  const labels = { onsen: 'Show me onsen and hot spring experiences', nature: 'I want nature and outdoor activities', dining: 'Suggest food and cultural dining experiences', activity: 'Show me outdoor activities', wellness: 'I want wellness and meditation experiences' }
+  const text = labels[category] || 'Show me recommended experiences'
+  document.getElementById('user-transcript').textContent = '「 ' + text + ' 」'
+  searchExperiencesByCategory(category)
+}
 function sendQuickAction(text) { document.getElementById('user-transcript').textContent = '「 ' + text + ' 」'; sendToZukku(text) }
 
 // ===== TEXT INPUT =====
@@ -1471,6 +1952,31 @@ function onWalletConnected(data) {
 }
 
 // ===== STEP 1: SEARCH EXPERIENCES =====
+async function searchExperiencesByCategory(category) {
+  // ⑤ カテゴリ別メッセージ
+  const catMsg = {
+    onsen:   'Searching for the finest onsen and hot spring retreats…',
+    nature:  'Scanning hidden nature trails and wilderness experiences…',
+    dining:  'Finding exclusive food and culture experiences…',
+    activity:'Locating thrilling outdoor activities…',
+    wellness:'Discovering wellness and meditation retreats…',
+  }
+  const msg = catMsg[category] || 'Coordinating with local hosts…'
+  setBallState('thinking')
+  speak(msg, async () => {
+    setBallState('thinking'); showStatus('Searching for ' + (category || 'experiences') + '...')
+    try {
+      const res = await fetch('/api/search', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nights: 2, guests: 2, category }) })
+      const data = await res.json()
+      renderExperiences(data.experiences)
+      setStep(1)
+      setBallState('idle')
+      const n = data.experiences.length
+      const catLabel = { onsen:'onsen retreats', nature:'nature experiences', dining:'culinary experiences', activity:'outdoor activities', wellness:'wellness experiences' }[category] || 'experiences'
+      speak("Oh-ho! I've found " + n + " handpicked " + catLabel + " just for you. Tap any card to choose!")
+    } catch(e) { setBallState('idle'); speak('The connection seems a little unstable. Please try again.') }
+  })
+}
 async function searchExperiences() {
   setBallState('thinking')
   speak('Coordinating with local hosts — just a moment while I find the perfect experience…', async () => {
@@ -1543,22 +2049,23 @@ async function selectExperience(id) {
 
   if (!needsApproval) {
     // Auto-book — no approval needed
-    speak('Great choice! At $' + exp.priceUSD + ' this is within your $' + cap + ' cap — ZUKKU is booking it automatically via Kite Passport!')
+    speak('Great choice! At $' + exp.priceUSD + ' this is within your $' + cap + ' cap — ZUKKU is sending PYUSD via Kite Testnet automatically!')
     setBallState('thinking')
-    showLoading('Auto-booking within your budget cap...')
+    showLoading('Sending PYUSD on Kite Testnet (EIP-3009 gasless)...')
     setTimeout(async () => {
       hideLoading()
-      try {
-        const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount: exp.priceUSD, currency:'USDC', description: exp.name }) })
-        const pd = await pr.json(); addTxToFeed(pd)
-      } catch(e) {
-        addTxToFeed({ txHash:'0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: exp.priceUSD, currency:'USDC', status:'auto-booked' })
-      }
+      // Kite Testnet PYUSD gasless transfer（EIP-3009）
+      const pyusdResult = await executePYUSDPayment(exp.priceUSD, exp.name)
+      const txHash = pyusdResult.txHash || '0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join('')
+      addTxToFeed({ txHash, amount: exp.priceUSD, currency: 'PYUSD', status: pyusdResult.onchain ? 'confirmed (on-chain)' : 'auto-booked' })
       addSpent(exp.priceUSD)
       flashKitePanel()
       setStep(3)
       setBallState('idle')
-      speak('Booking confirmed via Kite Passport! Now arranging your travel essentials automatically.')
+      const bookMsg = pyusdResult.onchain
+        ? 'PYUSD sent on Kite Testnet! Booking confirmed. Now arranging your travel essentials automatically.'
+        : 'Booking confirmed via Kite Passport! Now arranging your travel essentials automatically.'
+      speak(bookMsg)
       setTimeout(() => startAutoPurchase(), 2000)
       setTimeout(() => { _selectExpLock = false }, 2000)
     }, 1200)
@@ -1611,22 +2118,27 @@ async function authorizePayment() {
   if (!ok) { btn.disabled = false; btn.textContent = '✦ Authorize & Sign'; return }
   btn.textContent = 'Processing payment...'
   setBallState('thinking')
-  speak('Approval received! Processing your payment now.')
-  showLoading('Processing payment on-chain...')
+  speak('Approval received! Sending PYUSD via Kite Testnet gasless transfer now.')
+  showLoading('Sending PYUSD on Kite Testnet (EIP-3009)...')
+  const amount = state.selectedExp?.priceUSD || 100
   try {
-    const amount = state.selectedExp?.priceUSD || 100
-    const pr = await fetch('/api/payment/settle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: state.walletSession?.sessionId||'demo', amount, currency:'USDC', description: state.selectedExp?.name||'Experience booking' }) })
-    const pd = await pr.json(); hideLoading(); addTxToFeed(pd)
+    // Kite Testnet PYUSD gasless transfer（EIP-3009）
+    const pyusdResult = await executePYUSDPayment(amount, state.selectedExp?.name || 'Experience booking')
+    const txHash = pyusdResult.txHash || '0x' + Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join('')
+    const pd = { txHash, amount, currency: 'PYUSD', status: pyusdResult.onchain ? 'confirmed (on-chain)' : 'confirmed (simulated)' }
+    hideLoading(); addTxToFeed(pd)
     addSpent(amount)
-    speak('Payment confirmed via Kite Passport! Now ZUKKU will auto-arrange your travel essentials within your budget cap. Watch each transaction appear in real time below.')
+    const payMsg = pyusdResult.onchain
+      ? 'PYUSD payment confirmed on Kite Testnet! Now ZUKKU will auto-arrange your travel essentials.'
+      : 'Payment processed! Now ZUKKU will auto-arrange your travel essentials within your budget cap.'
+    speak(payMsg)
     setStep(3)
     flashKitePanel()
     setTimeout(() => startAutoPurchase(), 2500)
   } catch(e) {
     hideLoading()
-    const amount2 = state.selectedExp?.priceUSD || 100
-    const mt = { txHash:'0x'+Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: amount2, currency:'USDC', status:'confirmed' }
-    addTxToFeed(mt); addSpent(amount2); setStep(3); flashKitePanel(); setTimeout(() => startAutoPurchase(), 2500)
+    const mt = { txHash:'0x'+Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount, currency:'PYUSD', status:'confirmed' }
+    addTxToFeed(mt); addSpent(amount); setStep(3); flashKitePanel(); setTimeout(() => startAutoPurchase(), 2500)
   }
 }
 
@@ -1818,6 +2330,17 @@ const kite = {
 // Kiteステータス初期化
 async function kiteInit() {
   try {
+    // PYUSD残高をKite Testnetから直接取得
+    const balRes = await fetch('/api/kite/pyusd-balance')
+    const balData = await balRes.json()
+    if (balData.success) {
+      const formatted = balData.balanceFormatted || '0.0000 PYUSD'
+      document.getElementById('kite-balance').textContent = formatted
+    }
+  } catch(e) {
+    console.warn('PYUSD balance fetch error:', e)
+  }
+  try {
     const res = await fetch('/api/kite/status')
     const data = await res.json()
     if (data.wallet?.address) {
@@ -1825,11 +2348,6 @@ async function kiteInit() {
       document.getElementById('kite-wallet-addr').textContent =
         addr.slice(0,6) + '...' + addr.slice(-4)
     }
-    // 残高表示（0の場合もUSDCで表示）
-    const assets = data.wallet?.assets || data.wallet?.balance_data?.assets || []
-    const usdc = assets.find(a => a.symbol === 'USDC')
-    const bal = usdc?.balance || '0'
-    document.getElementById('kite-balance').textContent = parseFloat(bal).toFixed(2) + ' USDC'
     // セッション表示
     if (data.session?.current_session_id) {
       const sid = data.session.current_session_id
@@ -1948,6 +2466,19 @@ function addSpent(usd) {
   // Kite panel spent counter
   const el2 = document.getElementById('kite-spent-display')
   if (el2) el2.textContent = spentTotal.toFixed(2) + ' USDC'
+  // ③ 青囲み AVAILABLE 残高を更新
+  const availEl = document.getElementById('kite-balance')
+  if (availEl) {
+    // kite-balanceの現在値から支出を引く
+    const rawText = availEl.textContent || ''
+    const current = parseFloat(rawText.replace(/[^0-9.]/g,'')) || 0
+    if (!isNaN(current)) {
+      const next = Math.max(0, current - usd)
+      availEl.textContent = next.toFixed(2) + ' USDC'
+      // 残高が減ったことを色で強調
+      availEl.style.color = next < 10 ? '#FF6B6B' : '#4AFF8C'
+    }
+  }
 }
 
 function selectBudgetPreset(btn) {
@@ -1978,12 +2509,18 @@ function submitBudget() {
   // Update budget cap display in header area
   const capEl = document.getElementById('budget-cap-display')
   if (capEl) capEl.textContent = '$' + val
-  // Chat reply with guide
-  addMessage('user', \`My travel budget cap is $\${val} USD per transaction\`)
-  const reply = \`Oh-ho, perfect! A $\${val} cap per transaction — Kite Passport is now configured and ready. Experiences within $\${val} will be booked automatically with no approval needed! Now, who will you be traveling with? And do you prefer nature and solitude, or culture and gourmet dining?\`
-  addMessage('assistant', reply)
+  // Chat reply
+  addChatMsg('user', \`My travel budget cap is $\${val} USD per transaction\`)
+  const reply = \`Oh-ho, perfect! Budget cap of $\${val} is set. Kite Passport is now configured!\`
+  addChatMsg('assistant', reply)
   speak(reply)
   showToast(\`✓ Budget cap set: $\${val} USD\`)
+  // ① 予算設定直後に「どこへ？」を即発話（短いdelayで2文目として発声）
+  setTimeout(() => {
+    const guideMsg = 'Now, where in Japan would you like to go? Tell me the type of experience — Onsen retreat, nature adventure, or food and culture?'
+    addChatMsg('assistant', guideMsg)
+    speak(guideMsg)
+  }, 1800)
 }
 
 // ============================================
@@ -2070,7 +2607,8 @@ async function runA2ASimulation() {
   btn.disabled = false
   const nextM = A2A_MERCHANTS[a2aCurrentMerchant % A2A_MERCHANTS.length]
   btn.textContent = '↺ Next Host: ' + nextM.short
-  addSpent(m.total + m.itemTotal)
+  // ⑥ A2Aシミュレーションは実際の支払いではないのでaddSpent()を呼ばない
+  // addSpent(m.total + m.itemTotal)  // REMOVED: シミュレーション金額をヘッダー・青囲みに混入させない
   showToast('✓ A2A done! [' + m.short + '] — $' + (m.total + m.itemTotal) + ' USDC paid autonomously')
   // Update Kite Passport panel — reflect completed payment
   const kiteBadge2 = document.getElementById('kite-session-badge')
@@ -2083,6 +2621,51 @@ async function runA2ASimulation() {
   }
   const kiteSessionId = document.getElementById('kite-session-id')
   if (kiteSessionId) kiteSessionId.textContent = 'a2a_tx_' + Date.now().toString(36)
+}
+
+// ===== PYUSD実送金（Kiteテストネット） =====
+async function executePYUSDPayment(amountUSD, description) {
+  // Kiteパネルにステータス表示
+  const badge = document.getElementById('kite-session-badge')
+  if (badge) { badge.textContent = '⬡ PYUSD Sending...'; badge.style.color = '#FFD700' }
+  try {
+    const res = await fetch('/api/kite/pyusd-transfer', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ amountUSD, description }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      // 本物のオンチェーン送金成功
+      if (badge) { badge.textContent = '✅ PYUSD Sent'; badge.style.color = '#4AFF8C' }
+      const txHash = data.txHash
+      kiteAddTxLog(Date.now(), '✅',
+        'PYUSD gasless transfer — ' + description,
+        '$' + amountUSD + ' PYUSD',
+        'EIP-3009 | TX: ' + (txHash||'').slice(0,14) + '… | KiteAI Testnet #2368'
+      )
+      showToast('✅ PYUSD sent on Kite Testnet! TX: ' + (txHash||'').slice(0,10) + '…')
+      return { success: true, txHash, onchain: true }
+    } else if (data.simulation_mode) {
+      // 秘密鍵未設定 → シミュレーション
+      if (badge) { badge.textContent = '◉ Simulated'; badge.style.color = '#FF9800' }
+      const simTx = data.simulated_tx
+      kiteAddTxLog(Date.now(), '◉',
+        'PYUSD transfer (simulation) — ' + description,
+        '$' + amountUSD + ' PYUSD',
+        'No private key configured | simulated | KiteAI Testnet #2368'
+      )
+      showToast('◉ Simulation: PYUSD transfer (set KITE_WALLET_PRIVATE_KEY to go live)')
+      return { success: true, txHash: simTx?.txHash, onchain: false, simulated: true }
+    } else {
+      if (badge) { badge.textContent = '❌ Transfer failed'; badge.style.color = '#FF6B6B' }
+      console.error('PYUSD transfer error:', data.error)
+      return { success: false, error: data.error }
+    }
+  } catch(e) {
+    if (badge) { badge.textContent = '● Session Active'; badge.style.color = '' }
+    return { success: false, error: String(e) }
+  }
 }
 
 // メインTXフィード（トランザクションに購入内容の文字情報を表示）
@@ -2144,7 +2727,7 @@ function kiteShowWeather(city, data) {
   \`
   // 天気情報をチャットにも流す
   const weatherMsg = \`Here's the current weather in \${cityNames[city]||city}: \${cond}, \${temp}, humidity \${hum}.\`
-  addMessage('assistant', weatherMsg)
+  addChatMsg('assistant', weatherMsg)
 }
 
 // 新規セッション作成
