@@ -26,7 +26,7 @@ No repeated approvals. One session covers the entire trip — bookings, payments
 
 | Environment | URL |
 |-------------|-----|
-| **Production (Cloudflare Pages)** | https://flattora.pages.dev *(after deploy)* |
+| **Production (Cloudflare Pages)** | https://flattora.pages.dev |
 | GitHub Repository | https://github.com/proofofjapan-web/POJ1 |
 
 > **To run locally:** See [Local Setup](#local-setup) below.
