@@ -125,7 +125,7 @@ app.post('/api/chat', async (c) => {
   ]
   if (c.env?.AI) {
     try {
-      const response = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct', { messages, max_tokens: 300, temperature: 0.75 } as Parameters<typeof c.env.AI.run>[1])
+      const response = await c.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', { messages, max_tokens: 300, temperature: 0.75 } as Parameters<typeof c.env.AI.run>[1])
       const text = (response as { response?: string }).response || ''
       const actionMatch = text.match(/\[ACTION:([a-z_]+)\]/)
       const action = actionMatch ? actionMatch[1] : null
