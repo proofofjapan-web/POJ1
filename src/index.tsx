@@ -41,7 +41,7 @@ const ZUKKU_SYSTEM_PROMPT = `You are ZUKKU, a small owl-shaped robot developed b
 [ZUKKU EXPRESSIONS]
 - "Oh-ho, what a wonderful request!"
 - "I, ZUKKU, shall find the perfect match for you!"
-- "My tummy button just lit up — all systems ready!"`
+- "My eyes are glowing gold — all systems ready!"`
 
 // ===== Experiences DB (② 価格を$80〜$300に引き上げ・体験内容充実) =====
 const experiencesDB = [
@@ -151,7 +151,7 @@ function zukuFallback(message: string, history: { role: string; content: string 
   if (m.includes('宿') || m.includes('旅館') || m.includes('温泉') || m.includes('泊') || m.includes('秘境') || m.includes('体験') || m.includes('旅') || m.includes('探') || m.includes('おすすめ'))
     return { text: "Oh-ho! ZUKKU is on it. Here's an exclusive selection of retreats and experiences — all personally coordinated.", action: 'search_ryokan' }
   if (m.includes('ウォレット') || m.includes('接続') || m.includes('connect'))
-    return { text: 'My tummy button just lit up! Connecting your wallet — one approval and I handle everything.', action: 'connect_wallet' }
+    return { text: 'My eyes just lit up blue! Connecting your wallet — one approval and I handle everything.', action: 'connect_wallet' }
   if (m.includes('予約') || m.includes('確定') || m.includes('承認') || m.includes('お願い') || m.includes('決め'))
     return { text: 'Understood! Your approval is all it takes — ZUKKU will confirm everything instantly.', action: 'show_authorize' }
   if (m.includes('ルール') || m.includes('設定') || m.includes('自動'))
@@ -1244,9 +1244,42 @@ app.get('/', (c) => {
     #budget-modal.active { display: flex; }
     .budget-card {
       background: var(--surface2); border: 1px solid var(--gold-dim);
-      border-radius: 16px; padding: 36px 40px; max-width: 420px; width: 90%;
-      box-shadow: 0 0 60px rgba(201,168,76,0.15);
+      border-radius: 16px; padding: 32px 36px; max-width: 460px; width: 92%;
+      box-shadow: 0 0 60px rgba(201,168,76,0.15); max-height: 92vh; overflow-y: auto;
     }
+    /* 2列の予算入力エリア */
+    .budget-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .budget-col-box {
+      background: var(--surface3); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+    }
+    .budget-col-box.active-col { border-color: var(--gold-dim); background: rgba(201,168,76,0.04); }
+    .budget-col-label { font-size: 9px; letter-spacing: 0.25em; color: var(--gold); text-transform: uppercase; margin-bottom: 4px; }
+    .budget-col-desc { font-size: 10px; color: var(--white-dim); line-height: 1.5; margin-bottom: 10px; }
+    .budget-col-input {
+      width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+      color: var(--white); padding: 8px 10px; font-size: 16px;
+      border-radius: 6px; outline: none; font-family: 'Noto Sans JP', sans-serif;
+    }
+    .budget-col-input:focus { border-color: var(--gold); }
+    /* アラームセクション */
+    .budget-alarm-box {
+      background: rgba(30,80,160,0.10); border: 1px solid rgba(99,179,255,0.15);
+      border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
+    }
+    .budget-alarm-title { font-size: 10px; letter-spacing: 0.2em; color: #7BC4FF; text-transform: uppercase; margin-bottom: 8px; }
+    .budget-alarm-checks { display: flex; gap: 10px; flex-wrap: wrap; }
+    .budget-alarm-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--white-dim); cursor: pointer; }
+    .budget-alarm-item input[type="checkbox"] { accent-color: var(--gold); width: 13px; height: 13px; }
+    /* 進捗バー */
+    .trip-progress-bar {
+      background: rgba(201,168,76,0.08); border: 1px solid var(--gold-dim);
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none;
+    }
+    .trip-progress-bar.visible { display: block; }
+    .trip-progress-label { font-size: 10px; color: var(--white-dim); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .trip-progress-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    .trip-progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px; transition: width 0.5s; }
     .budget-zukku-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
     .budget-zukku-icon { font-size: 38px; }
     .budget-zukku-speech {
@@ -1363,10 +1396,19 @@ app.get('/', (c) => {
       <span class="logo-sub">by ZUKKU</span>
     </div>
     <div class="header-right">
-      <div id="spent-bar" style="display:none;align-items:center;gap:6px;font-size:11px;color:rgba(245,245,240,0.55);padding:4px 12px;border:1px solid rgba(201,168,76,0.2);border-radius:20px;background:rgba(201,168,76,0.05)">
+      <div id="spent-bar" style="display:none;align-items:center;gap:8px;font-size:11px;color:rgba(245,245,240,0.55);padding:4px 14px;border:1px solid rgba(201,168,76,0.2);border-radius:20px;background:rgba(201,168,76,0.05)">
         <span style="color:rgba(201,168,76,0.6)">⬡</span>
-        Spent <strong id="spent-total-display" style="color:var(--gold)">$0.00</strong>
-        <span style="color:rgba(245,245,240,0.3)">/ cap <span id="budget-cap-display" style="color:rgba(245,245,240,0.55)">—</span></span>
+        <span>Spent <strong id="spent-total-display" style="color:var(--gold)">$0.00</strong></span>
+        <span style="color:rgba(245,245,240,0.2)">|</span>
+        <span style="color:rgba(245,245,240,0.35)">Limit <span id="budget-cap-display" style="color:rgba(245,245,240,0.55)">—</span></span>
+        <span style="color:rgba(245,245,240,0.2)">|</span>
+        <span style="color:rgba(245,245,240,0.35)">Trip <span id="trip-budget-display" style="color:rgba(245,245,240,0.55)">—</span>
+          <span id="trip-pct-display" style="color:rgba(201,168,76,0.7);font-size:9px;margin-left:3px"></span>
+        </span>
+        <!-- ミニ進捗バー -->
+        <div style="width:60px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+          <div id="trip-progress-fill-mini" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));width:0%;border-radius:2px;transition:width 0.5s"></div>
+        </div>
       </div>
       <div class="wallet-status">
         <div class="wallet-dot" id="wallet-dot"></div>
@@ -1473,7 +1515,8 @@ app.get('/', (c) => {
     <div id="agent-rules-panel" class="panel">
       <div class="panel-title">◈ Autonomous Agent Rules <span class="mock-badge">Kite Rules</span></div>
       <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--white-dim)">
-        💰 Your current budget cap: <strong id="rule-budget-display" style="color:var(--gold)">not set</strong> — experiences at or below this amount are booked automatically without approval.
+        🔒 Auto-approve limit: <strong id="rule-budget-display" style="color:var(--gold)">not set</strong> — transactions at or below this amount are approved automatically without asking you.<br>
+        <span style="font-size:10px;color:rgba(245,245,240,0.4)">Anything above the limit requires your explicit approval.</span>
       </div>
       <div class="rules-grid">
         <div><div class="rule-label">Auto-purchase limit ($)</div><input class="rule-input" type="number" id="rule-max-spend" value="5000"></div>
@@ -1690,35 +1733,80 @@ app.get('/', (c) => {
       <div class="budget-zukku-row">
         <div class="budget-zukku-icon">🦉</div>
         <div class="budget-zukku-speech">
-          <strong style="font-size:14px;color:var(--gold)">Set Your Session Budget</strong><br>
+          <strong style="font-size:14px;color:var(--gold)">Configure Your Travel Budget</strong><br>
           <span style="font-size:11px;color:var(--white-dim)">
-            This is the <strong style="color:var(--white)">maximum spend per single transaction</strong> that ZUKKU can approve autonomously.<br>
-            Anything above this limit will require your explicit approval.<br>
-            <span style="color:rgba(74,255,140,0.7)">⬡ Kite Passport session will be configured with these limits.</span>
+            Set two separate limits so ZUKKU knows exactly when to act autonomously and when to ask.
           </span>
         </div>
       </div>
-      <div class="budget-presets">
-        <button class="budget-preset-btn" data-amount="10" onclick="selectBudgetPreset(this)">$10</button>
-        <button class="budget-preset-btn" data-amount="20" onclick="selectBudgetPreset(this)">$20</button>
-        <button class="budget-preset-btn selected" data-amount="50" onclick="selectBudgetPreset(this)">$50</button>
-        <button class="budget-preset-btn" data-amount="100" onclick="selectBudgetPreset(this)">$100</button>
-        <button class="budget-preset-btn" data-amount="200" onclick="selectBudgetPreset(this)">$200</button>
+
+      <!-- 2列: Auto-approve limit + Trip budget -->
+      <div class="budget-two-col">
+
+        <!-- 左: Auto-approve limit (per-tx) -->
+        <div class="budget-col-box active-col">
+          <div class="budget-col-label">🔒 Auto-approve Limit</div>
+          <div class="budget-col-desc">
+            Max per single transaction that ZUKKU can pay <strong style="color:var(--white)">without asking you</strong>. Above this → approval required.
+          </div>
+          <div class="budget-presets" style="margin-bottom:10px">
+            <button class="budget-preset-btn" data-amount="10" onclick="selectBudgetPreset(this,'limit')">$10</button>
+            <button class="budget-preset-btn" data-amount="20" onclick="selectBudgetPreset(this,'limit')">$20</button>
+            <button class="budget-preset-btn selected" data-amount="50" onclick="selectBudgetPreset(this,'limit')">$50</button>
+            <button class="budget-preset-btn" data-amount="100" onclick="selectBudgetPreset(this,'limit')">$100</button>
+            <button class="budget-preset-btn" data-amount="200" onclick="selectBudgetPreset(this,'limit')">$200</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" id="budget-limit-input" class="budget-col-input"
+                   value="50" min="1" placeholder="e.g. 50">
+            <span style="font-size:11px;color:var(--white-dim);white-space:nowrap">USD</span>
+          </div>
+        </div>
+
+        <!-- 右: Trip budget (total deposit) -->
+        <div class="budget-col-box">
+          <div class="budget-col-label">✈ Trip Budget</div>
+          <div class="budget-col-desc">
+            Total travel fund deposited for this trip. ZUKKU tracks spending against this and alerts you.
+          </div>
+          <div class="budget-presets" style="margin-bottom:10px">
+            <button class="budget-preset-btn" data-amount="500" onclick="selectBudgetPreset(this,'trip')">$500</button>
+            <button class="budget-preset-btn selected" data-amount="1000" onclick="selectBudgetPreset(this,'trip')">$1K</button>
+            <button class="budget-preset-btn" data-amount="2000" onclick="selectBudgetPreset(this,'trip')">$2K</button>
+            <button class="budget-preset-btn" data-amount="5000" onclick="selectBudgetPreset(this,'trip')">$5K</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" id="budget-trip-input" class="budget-col-input"
+                   value="1000" min="1" placeholder="e.g. 1000">
+            <span style="font-size:11px;color:var(--white-dim);white-space:nowrap">USD</span>
+          </div>
+        </div>
       </div>
-      <div class="budget-custom-row">
-        <input type="number" id="budget-custom-input" class="budget-custom-input"
-               placeholder="Enter amount" value="50" min="1">
-        <span class="budget-unit">USD</span>
+
+      <!-- Spending alarm -->
+      <div class="budget-alarm-box">
+        <div class="budget-alarm-title">⬡ Spending Alert Thresholds</div>
+        <div style="font-size:10px;color:rgba(120,170,220,0.6);margin-bottom:8px">
+          ZUKKU will alert you when Trip Budget consumption reaches these levels:
+        </div>
+        <div class="budget-alarm-checks">
+          <label class="budget-alarm-item"><input type="checkbox" id="alarm-30" checked> 30%</label>
+          <label class="budget-alarm-item"><input type="checkbox" id="alarm-50" checked> 50%</label>
+          <label class="budget-alarm-item"><input type="checkbox" id="alarm-70" checked> 70%</label>
+          <label class="budget-alarm-item"><input type="checkbox" id="alarm-90" checked> 90%</label>
+        </div>
       </div>
+
       <div class="budget-session-info">
         ⬡ <strong>Kite Passport Session Config</strong><br>
         <span style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
-          <span>🔒 Per-tx cap: <strong style="color:var(--white)">your amount above</strong></span>
-          <span>⏱ Valid: <strong style="color:var(--white)">24 hours</strong></span>
+          <span>🔒 Per-tx auto-approve: <strong style="color:var(--white)" id="budget-limit-preview">$50</strong></span>
+          <span>✈ Trip budget: <strong style="color:var(--white)" id="budget-trip-preview">$1,000</strong></span>
+          <span>⏱ Valid: <strong style="color:var(--white)">24h</strong></span>
         </span>
         <span style="color:rgba(74,255,140,0.6);display:block;margin-top:4px">
-          ✓ Purchases within the cap are handled automatically<br>
-          ✓ Anything above the cap requires your explicit approval
+          ✓ Transactions within the auto-approve limit are handled automatically<br>
+          ✓ Transactions above the limit require your explicit approval
         </span>
       </div>
       <button class="budget-submit-btn" onclick="submitBudget()">
@@ -1907,7 +1995,7 @@ function localFallback(msg) {
   const m = msg.toLowerCase()
   if (m.includes('ryokan') || m.includes('onsen') || m.includes('travel') || m.includes('experience') || m.includes('retreat') || m.includes('japan') || m.includes('宿') || m.includes('温泉') || m.includes('旅') || m.includes('体験') || m.includes('探') || m.includes('秘境'))
     return { text: "Oh-ho! Leave it to ZUKKU. Here are the finest hidden retreats and experiences I've curated for you!", action: 'search_ryokan' }
-  if (m.includes('wallet') || m.includes('connect') || m.includes('ウォレット') || m.includes('接続')) return { text: 'My tummy button just lit up! Connecting your wallet right now.', action: 'connect_wallet' }
+  if (m.includes('wallet') || m.includes('connect') || m.includes('ウォレット') || m.includes('接続')) return { text: 'My eyes just lit up! Connecting your wallet right now.', action: 'connect_wallet' }
   if (m.includes('book') || m.includes('approve') || m.includes('reserve') || m.includes('予約') || m.includes('承認')) return { text: 'Understood. Your approval is all it takes — ZUKKU will handle everything from there.', action: 'show_authorize' }
   if (m.includes('rules') || m.includes('settings') || m.includes('limit') || m.includes('ルール') || m.includes('設定')) return { text: 'Opening your agent rule settings.', action: 'open_rules' }
   return { text: "I'd love to find the perfect match for you! Tell me a little more — are you drawn to nature and solitude, cultural immersion, or perhaps a luxurious onsen escape? And will you be traveling solo or with someone special?", action: null }
@@ -1947,7 +2035,15 @@ function onWalletConnected(data) {
   document.getElementById('wallet-address').textContent = data.walletAddress.substring(0,8)+'...'+data.walletAddress.substring(36)
   document.getElementById('wallet-panel').classList.add('visible')
   document.getElementById('status-bar').style.display = 'flex'
-  speak('Wallet connected! My tummy button just lit up gold.')
+  // ZUKKUの画像をゴールドglow演出（CSS filterで実現）
+  const zukkuImg = document.getElementById('zukku-ball')
+  if (zukkuImg) {
+    zukkuImg.style.filter = 'drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 48px rgba(201,168,76,0.85)) sepia(0.3) saturate(1.4) brightness(1.15)'
+    setTimeout(() => {
+      zukkuImg.style.filter = 'drop-shadow(0 10px 28px rgba(0,0,0,0.7)) drop-shadow(0 0 12px rgba(201,168,76,0.1))'
+    }, 4000)
+  }
+  speak('Wallet connected! My eyes are glowing gold — all systems are ready!')
   showToast('Wallet connected!')
 }
 
@@ -2081,14 +2177,16 @@ async function selectExperience(id) {
 function showAuthorizeForExp(exp) {
   if (!state.walletConnected) { speak('Please connect your wallet first.'); connectWallet(); return }
   document.getElementById('authorize-amount-display').innerHTML = '$' + exp.priceUSD + '<span>USD</span>'
-  const capAmt = budgetState.amount || 50
+  const limitAmt = budgetState.limit || 50
+  const tripAmt  = budgetState.trip  || 0
   document.getElementById('authorize-desc').innerHTML = \`
     <strong style="color:var(--white)">\${exp.name}</strong><br>
     <span style="color:rgba(201,168,76,0.8)">⬡ Kite Passport</span> will process this payment via x402 protocol.<br>
     <span style="font-size:11px;color:var(--white-dim)">
-      Per-tx cap: <strong style="color:var(--white)">$\${capAmt} USD</strong> &nbsp;|&nbsp;
+      🔒 Auto-approve limit: <strong style="color:var(--white)">$\${limitAmt} USD</strong> &nbsp;|&nbsp;
+      ✈ Trip budget: <strong style="color:var(--white)">\${tripAmt > 0 ? '$' + tripAmt.toLocaleString() : '—'}</strong> &nbsp;|&nbsp;
       Session valid: <strong style="color:var(--white)">24h</strong><br>
-      Related travel essentials within your cap will be auto-purchased after approval.
+      Travel essentials within the auto-approve limit will be handled automatically after approval.
     </span>\`
   document.getElementById('authorize-section').classList.add('visible')
   setStep(2)
@@ -2200,7 +2298,16 @@ function purchaseItemsSequentially(items, idx, onAllDone) {
     } catch(e) {}
     if (card) { card.classList.remove('purchasing'); card.classList.add('purchased') }
     if (statusEl) { statusEl.textContent = '✓ Purchased'; statusEl.className = 'item-status done' }
-    addTxToFeed({ txHash:'0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''), amount: item.priceUSD, currency:'USDC', status:'auto-purchased' })
+    const txHash = '0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join('')
+    // メインTXフィードに追加
+    addTxToFeed({ txHash, amount: item.priceUSD, currency:'USDC', status:'auto-purchased' })
+    // 青囲みKiteパネルのログにも反映（自動購入分を決済履歴に表示）
+    const logId = Date.now() + idx
+    kiteAddTxLog(logId, '🛒',
+      'Auto-purchase: ' + item.name,
+      '$' + item.priceUSD + ' USDC',
+      'Auto-approved | TX: ' + txHash.slice(0,14) + '… | ' + new Date().toLocaleTimeString('en-US')
+    )
     addSpent(item.priceUSD)
     showToast('Auto-purchased: ' + item.name)
     purchaseItemsSequentially(items, idx+1, onAllDone)
@@ -2454,8 +2561,20 @@ function kiteUpdateTxLog(id, icon, label, amount, meta) {
 // ============================================
 // BUDGET MODAL
 // ============================================
-let budgetState = { amount: 0, currency: 'USD' }
+let budgetState = {
+  limit: 0,       // Auto-approve limit: per-tx上限（この額以下は自動承認）
+  trip: 0,        // Trip budget: 旅の総予算（デポジット残高）
+  alarms: { 30: true, 50: true, 70: true, 90: true }, // 消費アラーム閾値
+  firedAlarms: {}, // 発火済みアラームの記録（同じ閾値で2度鳴らさない）
+  // 後方互換: amount は limit の alias
+  get amount() { return this.limit },
+  set amount(v) { this.limit = v },
+}
 let spentTotal = 0  // running total of all payments (experience + auto-purchase + weather)
+
+// ============================================
+// addSpent: 支出記録 + ヘッダー更新 + Kite残高更新 + アラームチェック
+// ============================================
 function addSpent(usd) {
   spentTotal += usd
   // Header spent bar — show once spending starts
@@ -2466,29 +2585,89 @@ function addSpent(usd) {
   // Kite panel spent counter
   const el2 = document.getElementById('kite-spent-display')
   if (el2) el2.textContent = spentTotal.toFixed(2) + ' USDC'
-  // ③ 青囲み AVAILABLE 残高を更新
+  // ③ 青囲み PYUSD Balance残高を更新
   const availEl = document.getElementById('kite-balance')
   if (availEl) {
-    // kite-balanceの現在値から支出を引く
     const rawText = availEl.textContent || ''
     const current = parseFloat(rawText.replace(/[^0-9.]/g,'')) || 0
     if (!isNaN(current)) {
       const next = Math.max(0, current - usd)
       availEl.textContent = next.toFixed(2) + ' USDC'
-      // 残高が減ったことを色で強調
       availEl.style.color = next < 10 ? '#FF6B6B' : '#4AFF8C'
+    }
+  }
+  // Trip budget 進捗バー更新＋アラームチェック
+  if (budgetState.trip > 0) {
+    const pct = (spentTotal / budgetState.trip) * 100
+    const pctDisplay = document.getElementById('trip-pct-display')
+    if (pctDisplay) pctDisplay.textContent = '(' + pct.toFixed(0) + '%)'
+    const mini = document.getElementById('trip-progress-fill-mini')
+    if (mini) {
+      mini.style.width = Math.min(pct, 100) + '%'
+      // 70%以上→オレンジ、90%以上→レッド
+      if (pct >= 90) mini.style.background = '#FF6B6B'
+      else if (pct >= 70) mini.style.background = '#FF9800'
+      else mini.style.background = 'linear-gradient(90deg,var(--gold),var(--gold-light))'
+    }
+    // アラーム発火チェック (30/50/70/90%)
+    const thresholds = [30, 50, 70, 90]
+    for (const t of thresholds) {
+      if (budgetState.alarms[t] && !budgetState.firedAlarms[t] && pct >= t) {
+        budgetState.firedAlarms[t] = true
+        const alertMsg = t >= 90
+          ? \`Oh-ho! You've used \${t}% of your trip budget! Only $\${(budgetState.trip - spentTotal).toFixed(0)} remaining. Shall I stop auto-purchasing?\`
+          : t >= 70
+          ? \`Heads up! \${t}% of your trip budget is spent — $\${(budgetState.trip - spentTotal).toFixed(0)} left.\`
+          : \`ZUKKU notice: \${t}% of your trip budget used.\`
+        setTimeout(() => {
+          addChatMsg('assistant', alertMsg)
+          speak(alertMsg)
+          showToast('⚠ Trip budget ' + t + '% reached!')
+        }, 500)
+        break // 複数アラームが同時に来たら最大のものだけ発火
+      }
     }
   }
 }
 
-function selectBudgetPreset(btn) {
-  document.querySelectorAll('.budget-preset-btn').forEach(b => b.classList.remove('selected'))
+// ============================================
+// プリセットボタン (type: 'limit' | 'trip')
+// ============================================
+function selectBudgetPreset(btn, type) {
+  // 同じtype内だけ selected を切り替え
+  const col = btn.closest('.budget-col-box') || btn.closest('.budget-presets')
+  if (col) col.querySelectorAll('.budget-preset-btn').forEach(b => b.classList.remove('selected'))
+  else document.querySelectorAll('.budget-preset-btn').forEach(b => b.classList.remove('selected'))
   btn.classList.add('selected')
-  document.getElementById('budget-custom-input').value = btn.dataset.amount
+  if (type === 'trip') {
+    document.getElementById('budget-trip-input').value = btn.dataset.amount
+    updateBudgetPreviews()
+  } else {
+    document.getElementById('budget-limit-input').value = btn.dataset.amount
+    updateBudgetPreviews()
+  }
 }
+
+function updateBudgetPreviews() {
+  const lim = parseFloat(document.getElementById('budget-limit-input')?.value) || 0
+  const trip = parseFloat(document.getElementById('budget-trip-input')?.value) || 0
+  const lp = document.getElementById('budget-limit-preview')
+  const tp = document.getElementById('budget-trip-preview')
+  if (lp) lp.textContent = '$' + lim.toLocaleString()
+  if (tp) tp.textContent = '$' + trip.toLocaleString()
+}
+
+// リアルタイムプレビュー更新（input変化時）
+document.addEventListener('DOMContentLoaded', () => {
+  const li = document.getElementById('budget-limit-input')
+  const ti = document.getElementById('budget-trip-input')
+  if (li) li.addEventListener('input', updateBudgetPreviews)
+  if (ti) ti.addEventListener('input', updateBudgetPreviews)
+})
 
 function showBudgetModal() {
   document.getElementById('budget-modal').classList.add('active')
+  updateBudgetPreviews()
 }
 
 function closeBudgetModal() {
@@ -2496,25 +2675,37 @@ function closeBudgetModal() {
 }
 
 function submitBudget() {
-  const val = parseFloat(document.getElementById('budget-custom-input').value) || 0
-  if (val <= 0) { showToast('Please enter your budget'); return }
-  budgetState.amount = val
+  const limit = parseFloat(document.getElementById('budget-limit-input').value) || 0
+  const trip  = parseFloat(document.getElementById('budget-trip-input').value)  || 0
+  if (limit <= 0) { showToast('Please enter the auto-approve limit'); return }
+  budgetState.limit = limit
+  budgetState.trip  = trip
+  budgetState.firedAlarms = {} // リセット
+  // アラーム設定を読む
+  budgetState.alarms = {
+    30: document.getElementById('alarm-30')?.checked ?? true,
+    50: document.getElementById('alarm-50')?.checked ?? true,
+    70: document.getElementById('alarm-70')?.checked ?? true,
+    90: document.getElementById('alarm-90')?.checked ?? true,
+  }
   closeBudgetModal()
-  // Update Agent Rules panel budget display
+  // Agent Rules パネルに反映
   const ruleEl = document.getElementById('rule-budget-display')
-  if (ruleEl) ruleEl.textContent = '$' + val + ' USD'
-  // Update Kite panel limits
+  if (ruleEl) ruleEl.textContent = '$' + limit + ' USD (auto-approve)'
+  // Kite パネル: limit表示
   const limits = document.querySelectorAll('.kite-limit')
-  if (limits.length >= 2) limits[1].textContent = 'Budget cap: $' + val
-  // Update budget cap display in header area
+  if (limits.length >= 2) limits[1].textContent = 'Auto-approve: $' + limit
+  // ヘッダー表示更新
   const capEl = document.getElementById('budget-cap-display')
-  if (capEl) capEl.textContent = '$' + val
+  if (capEl) capEl.textContent = '$' + limit
+  const tripEl = document.getElementById('trip-budget-display')
+  if (tripEl) tripEl.textContent = trip > 0 ? '$' + trip.toLocaleString() : '—'
   // Chat reply
-  addChatMsg('user', \`My travel budget cap is $\${val} USD per transaction\`)
-  const reply = \`Oh-ho, perfect! Budget cap of $\${val} is set. Kite Passport is now configured!\`
+  addChatMsg('user', \`Auto-approve limit: $\${limit} | Trip budget: $\${trip || '—'}\`)
+  const reply = \`Oh-ho, perfect! Auto-approve limit of $\${limit} per transaction is set. \${trip > 0 ? 'Trip budget: $' + trip.toLocaleString() + '.' : ''} Kite Passport is now configured!\`
   addChatMsg('assistant', reply)
   speak(reply)
-  showToast(\`✓ Budget cap set: $\${val} USD\`)
+  showToast(\`✓ Set: Auto-approve $\${limit} | Trip $\${trip > 0 ? trip.toLocaleString() : '—'}\`)
   // ① 予算設定直後に「どこへ？」を即発話（短いdelayで2文目として発声）
   setTimeout(() => {
     const guideMsg = 'Now, where in Japan would you like to go? Tell me the type of experience — Onsen retreat, nature adventure, or food and culture?'
